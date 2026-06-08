@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Intermediate runtime copy left by `bun build --compile`
+*.bun-build
+.*.bun-build
+
+# Logs
+*.log
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Env
+.env
+.env.local
+
+.*.mcp.json
+
+/plan/**
