@@ -1,6 +1,6 @@
 {
   "name": "jj-chrome-debug-profile-sync",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "rsync Chrome profile and launch a debug Chrome for CDP / external tooling (macOS only)",
   "type": "module",
   "private": true,

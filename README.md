@@ -22,3 +22,23 @@ The installed command is `jj-chrome-debug-profile-sync` (same as the repo / bina
 | `version` | `-v` / `--version` | Version |
 | `update` | `upgrade` | Self-update (compiled binary only) |
 | `uninstall` | — | Uninstall (compiled binary only) |
+
+## With Chrome MCP
+
+Launch debug Chrome via this tool, then point [chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp) at `http://127.0.0.1:9222` — AI agents (Claude Code / Codex / etc.) can operate Chrome over CDP without per-action approval prompts.
+
+`.mcp.json` example:
+
+```json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--browser-url=http://127.0.0.1:9222"
+      ]
+    }
+  }
+}
+```

@@ -22,3 +22,23 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 | `version` | `-v` / `--version` | 版本 |
 | `update` | `upgrade` | 自更新 (仅编译后二进制) |
 | `uninstall` | — | 卸载 (仅编译后二进制) |
+
+## 配合 Chrome MCP
+
+通过本工具启动 debug Chrome 后, 将 [chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp) 指向 `http://127.0.0.1:9222` — AI agent (Claude Code / Codex 等) 即可通过 CDP 直接操控浏览器, 无需逐次手动审批.
+
+`.mcp.json` 示例:
+
+```json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--browser-url=http://127.0.0.1:9222"
+      ]
+    }
+  }
+}
+```

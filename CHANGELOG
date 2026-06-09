@@ -2,6 +2,13 @@
 
 面向开发者，镜像 [CHANGELOG.md](./CHANGELOG.md) 每条变更并补技术细节。规则见 [llm-doc-style.md](./llm-doc-style.md)。
 
+## [0.1.1] - 2026-06-09
+
+### Added
+
+- README 补充 Chrome MCP 配合使用场景及 `.mcp.json` 配置示例
+  - `README.md` / `README.zh.md` 新增 "With Chrome MCP" / "配合 Chrome MCP" 段落，含 `chrome-devtools-mcp` 连接 `127.0.0.1:9222` 的 `.mcp.json` 示例
+
 ## [0.1.0] - 2026-06-08
 
 ### Added
