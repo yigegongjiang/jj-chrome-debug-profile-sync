@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { chmod, mkdir, rename, unlink, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
-import { run, SRC, DST, PORT } from "./chrome.ts";
+import { run, runOriginal, SRC, DST, PORT } from "./chrome.ts";
 import { downloadWithProgress } from "./download.ts";
 import pkg from "../package.json" with { type: "json" };
 
@@ -20,6 +20,7 @@ const USAGE = `Usage: ${NAME} [command]
 
 Commands:
   (none)                  Sync the Chrome profile and launch a debug Chrome (CDP)
+  original                Launch the original Chrome with the default profile
   help, --help, -h        Show this help message
   version, --version, -v  Show version information
   update, upgrade         Download the latest release and replace this binary
@@ -123,6 +124,8 @@ async function main(args: readonly string[]): Promise<number> {
   switch (cmd) {
     case undefined:
       return await run();
+    case "original":
+      return await runOriginal();
     case "help":
     case "--help":
     case "-h":

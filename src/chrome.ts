@@ -18,6 +18,8 @@ const RSYNC_EXCLUDES = [
   "/OptGuideOnDeviceModel/", "/OptGuideOnDeviceClassifierModel/", // 端侧 AI 模型
   "/OnDeviceHeadSuggestModel/", "/optimization_guide_model_store/", "/WasmTtsEngine/",
   "/component_crx_cache/", "/extensions_crx_cache/", // 组件 / 扩展 crx 缓存
+  "Extensions/", "Extension State/", "Extension Rules/", "Extension Scripts/", // 扩展本体 / 状态 (debug chrome 不带扩展)
+  "Local Extension Settings/", "Sync Extension Settings/", "Managed Extension Settings/",
   "/GraphiteDawnCache/", "/GrShaderCache/", "/GPUPersistentCache/", "/ShaderCache/", // GPU / Shader
   "Cache/", "Code Cache/", "GPUCache/", "DawnWebGPUCache/", "CacheStorage/", "ScriptCache/", // 通用缓存
 ];
@@ -95,6 +97,7 @@ function launchChrome(): void {
       `--remote-debugging-port=${PORT}`,
       "--remote-allow-origins=*",
       "--origin-trial-disabled-features=CanvasTextNg|WebAssemblyCustomDescriptors",
+      "--disable-extensions",
       "--no-first-run",
       "--no-default-browser-check",
     ],
@@ -128,6 +131,28 @@ async function waitForCdp(): Promise<void> {
   }
   console.log("");
   console.log(`⚠️ Chrome launched but CDP not detected within 15s; open ${url} to check`);
+}
+
+// 用原始 user-data-dir 启动日常 Chrome。debug Chrome 运行时,原始 Chrome 因单例锁通常无法直接打开,
+// 此命令通过 `open -na` 显式拉起新实例,使用默认 profile,与 debug 副本并存。
+export async function runOriginal(): Promise<number> {
+  if (process.platform !== "darwin") {
+    console.error(`❌ macOS only (current: ${process.platform})`);
+    return 1;
+  }
+  const executable = await access(CHROME_BIN, constants.X_OK).then(() => true, () => false);
+  if (!executable) {
+    console.error(`❌ Chrome not found: ${CHROME_BIN}`);
+    return 1;
+  }
+  console.log(`🚀 Launching original Chrome (user-data-dir=${SRC}) …`);
+  // -n 强制新实例; -a 指定 app; --args 后传给 Chrome。显式 --user-data-dir 指向默认目录,
+  // 绕过 macOS Launch Services 对已运行实例的复用。
+  const r = Bun.spawnSync(
+    ["open", "-na", "Google Chrome", "--args", `--user-data-dir=${SRC}`],
+    { stdout: "inherit", stderr: "inherit" },
+  );
+  return r.success ? 0 : 1;
 }
 
 // 镜像日常 Chrome profile 到独立目录并以 CDP 调试端口启动,供外部工具(CDP / MCP)连接。

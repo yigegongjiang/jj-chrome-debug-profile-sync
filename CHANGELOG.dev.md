@@ -7,6 +7,18 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.2.0] - 2026-06-16
+
+### Added
+
+- 新增 `original` 子命令: 启动原始 Chrome (默认 profile), 可与 debug 实例并存使用.
+  - `src/chrome.ts` 导出 `runOriginal()`, 通过 `open -na "Google Chrome" --args --user-data-dir=$SRC` 强制新实例; `src/index.ts` 增加 `case "original"` 分支与 USAGE 条目.
+
+### Changed
+
+- debug Chrome 启动时不再携带任何扩展 (同步阶段排除扩展数据 + 启动禁用扩展).
+  - `RSYNC_EXCLUDES` 追加 `Extensions/` / `Extension State/` / `Extension Rules/` / `Extension Scripts/` / `Local|Sync|Managed Extension Settings/`; `launchChrome()` 启动参数追加 `--disable-extensions`.
+
 ## [0.1.1] - 2026-06-09
 
 ### Added
@@ -25,5 +37,6 @@
 - `help` 显示 chrome profile 路径 (日常源目录、调试副本目录、CDP 端点).
   - `src/chrome.ts` 导出 `SRC` / `DST` / `PORT`; `src/index.ts` help 分支追加 Profile paths 段.
 
+[0.2.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/releases/tag/v0.1.0

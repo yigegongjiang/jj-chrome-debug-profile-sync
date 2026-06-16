@@ -23,7 +23,8 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 <!-- prettier-ignore -->
 | 命令 | 别名 | 说明 |
 |---|---|---|
-| `(无)` | — | 同步 profile → 启动 debug Chrome (CDP `:9222`) |
+| `(无)` | — | 同步 profile → 启动 debug Chrome (CDP `:9222`, 无扩展) |
+| `original` | — | 启动原始 Chrome (默认 profile, 与 debug 实例并存) |
 | `help` | `-h` / `--help` | 用法 |
 | `version` | `-v` / `--version` | 版本 |
 | `update` | `upgrade` | 自更新 (仅编译后二进制) |
