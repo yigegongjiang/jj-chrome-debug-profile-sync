@@ -7,6 +7,15 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.2.1] - 2026-07-07
+
+### Fixed
+
+- debug Chrome 不再禁用扩展功能, 可正常安装/使用扩展; 同时彻底切断原 profile 扩展的迁移路径(本地文件清理 + 关闭 Chrome Sync 云端拉取), 不会再静默出现原 profile 装过的扩展.
+  - `launchChrome()` 移除 `--disable-extensions`, 追加 `--disable-sync` + `--disable-default-apps`: 前者关 Chrome Sync (避免云端把原 profile 已同步扩展拉回), 后者关 Chrome 出厂捆绑应用 (Application Launcher for Drive 等走 `external_extensions.json` 分发的 Google 默认扩展); cookie / 密码 / 网站登录态是本地 profile 数据, 不走 sync, 保持不变.
+  - `RSYNC_EXCLUDES` 保留(仍排除 `Extensions/` 等目录, 即不迁移原 profile 扩展本体).
+  - 新增 `stripMigratedExtensions()`: sync 后清除各 profile 目录 `Preferences` / `Secure Preferences` 里的 `extensions` 记录(含 `protection.macs.extensions` 防篡改 MAC), 避免 Chrome 用其中残留的 Web Store `update_url` 静默重装 —— 与 `--disable-sync` 双保险.
+
 ## [0.2.0] - 2026-06-16
 
 ### Added
@@ -37,6 +46,7 @@
 - `help` 显示 chrome profile 路径 (日常源目录、调试副本目录、CDP 端点).
   - `src/chrome.ts` 导出 `SRC` / `DST` / `PORT`; `src/index.ts` help 分支追加 Profile paths 段.
 
+[0.2.1]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/releases/tag/v0.1.0
