@@ -1,0 +1,439 @@
+{
+  "base_integrity": {
+    "Cookies": "ok",
+    "Extension Cookies": "ok",
+    "Favicons": "ok",
+    "History": "ok",
+    "Login Data": "ok",
+    "Web Data": "ok"
+  },
+  "chrome_backup_retained": false,
+  "chrome_version": "150.0.7871.186",
+  "dia_chromium_version": "150.0.7871.182",
+  "excluded_dia_only_patterns": [
+    ".company.thebrowser.dia.*",
+    "AgentArtifacts",
+    "AgentServer",
+    "HomeSurface",
+    "Units",
+    "agent_artifacts.db*",
+    "assistant.db*",
+    "assistant_suggestions_database.db*",
+    "chat_suggestions_database.db*",
+    "custom_skills_database.db*",
+    "internal_skills_playground_database.db*",
+    "key_value_store.db*",
+    "live_data_database.db*",
+    "mcp_auth.db*",
+    "memory.db*",
+    "memory_key_value_store.db*",
+    "skills_history_database.db*",
+    "sync_queue.db*",
+    "tabs.db*"
+  ],
+  "reencrypted_fields": {
+    "Cookies:cookies.encrypted_value": 2829,
+    "Extension Cookies:cookies.encrypted_value": 1,
+    "Login Data:logins.password_value": 1131,
+    "Web Data:credit_cards.card_number_encrypted": 4,
+    "Web Data:keywords.url_hash": 46,
+    "Web Data:local_stored_cvc.value_encrypted": 2
+  },
+  "secure_preferences": {
+    "chrome_seed_resource_id": 238,
+    "chrome_seed_sha256": "9fd616d4e985d838f9b85497d81af34446f3814eb66be9ace4563c6fe8ec3591",
+    "resigned": {
+      "encrypted_hashes": 38,
+      "legacy_macs": 38
+    },
+    "verified": {
+      "encrypted_hashes": 38,
+      "legacy_macs": 38
+    }
+  },
+  "smoke_test": {
+    "after": {
+      "bookmarks": 0,
+      "cookies": 2829,
+      "cookies_expired_persistent": 168,
+      "cookies_live_persistent": 2560,
+      "cookies_persistent": 2728,
+      "cookies_session": 101,
+      "downloads": 115,
+      "extensions": [
+        "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+        "clngdbkpkpeebahjckkjfobafhncgmne",
+        "dbepggeogbaibhgnhhndojpepiihcmeb",
+        "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+        "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+        "hehggadaopoacecdllhhajmbjkdcmajg",
+        "ldgfbffkinooeloadekpmfoklnobpien"
+      ],
+      "extensions_registered": [
+        "ahfgeienlihckogmohjhadlkjgocpleb",
+        "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+        "clngdbkpkpeebahjckkjfobafhncgmne",
+        "cnmkapobonpnoikggfbonmdkknnglejo",
+        "dbepggeogbaibhgnhhndojpepiihcmeb",
+        "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+        "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+        "fignfifoniblkonapihmkfakmlgkbkcf",
+        "hehggadaopoacecdllhhajmbjkdcmajg",
+        "iceenmpnolihodknabnnanmmdipodjfa",
+        "ldciclpbkaobfbicjebamaapbfplfjen",
+        "ldgfbffkinooeloadekpmfoklnobpien",
+        "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+        "nkeimhogjdpnpccoofpliimaahmaaome"
+      ],
+      "history_urls": 122855,
+      "history_visits": 1977550,
+      "passwords": 1141,
+      "sessions": 5,
+      "site_storage_bytes": 4429556344,
+      "webdata_autofill_profiles": 0,
+      "webdata_credit_cards": 4
+    },
+    "before": {
+      "bookmarks": 0,
+      "cookies": 2829,
+      "cookies_expired_persistent": 170,
+      "cookies_live_persistent": 2558,
+      "cookies_persistent": 2728,
+      "cookies_session": 101,
+      "downloads": 115,
+      "extensions": [
+        "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+        "clngdbkpkpeebahjckkjfobafhncgmne",
+        "dbepggeogbaibhgnhhndojpepiihcmeb",
+        "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+        "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+        "hehggadaopoacecdllhhajmbjkdcmajg",
+        "ldgfbffkinooeloadekpmfoklnobpien"
+      ],
+      "extensions_registered": [
+        "ahfgeienlihckogmohjhadlkjgocpleb",
+        "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+        "clngdbkpkpeebahjckkjfobafhncgmne",
+        "cnmkapobonpnoikggfbonmdkknnglejo",
+        "dbepggeogbaibhgnhhndojpepiihcmeb",
+        "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+        "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+        "hehggadaopoacecdllhhajmbjkdcmajg",
+        "iceenmpnolihodknabnnanmmdipodjfa",
+        "ldciclpbkaobfbicjebamaapbfplfjen",
+        "ldgfbffkinooeloadekpmfoklnobpien",
+        "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+        "nkeimhogjdpnpccoofpliimaahmaaome"
+      ],
+      "history_urls": 122855,
+      "history_visits": 1977548,
+      "passwords": 1141,
+      "sessions": 6,
+      "site_storage_bytes": 4429570870,
+      "webdata_autofill_profiles": 0,
+      "webdata_credit_cards": 4
+    },
+    "integrity": {
+      "Cookies": "ok",
+      "Extension Cookies": "ok",
+      "Favicons": "ok",
+      "History": "ok",
+      "Login Data": "ok",
+      "Web Data": "ok"
+    },
+    "ready": true,
+    "returncode": 0
+  },
+  "source_encryption": {
+    "Cookies:cookies.encrypted_value": 2829,
+    "Extension Cookies:cookies.encrypted_value": 1,
+    "Login Data:logins.password_value": 1131,
+    "Web Data:credit_cards.card_number_encrypted": 4,
+    "Web Data:keywords.url_hash": 46,
+    "Web Data:local_stored_cvc.value_encrypted": 2
+  },
+  "source_integrity": {
+    "Cookies": "ok",
+    "Extension Cookies": "ok",
+    "Favicons": "ok",
+    "History": "ok",
+    "Login Data": "ok",
+    "Web Data": "ok"
+  },
+  "source_metrics": {
+    "bookmarks": 0,
+    "cookies": 2829,
+    "cookies_expired_persistent": 170,
+    "cookies_live_persistent": 2558,
+    "cookies_persistent": 2728,
+    "cookies_session": 101,
+    "downloads": 115,
+    "extensions": [
+      "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+      "clngdbkpkpeebahjckkjfobafhncgmne",
+      "dbepggeogbaibhgnhhndojpepiihcmeb",
+      "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+      "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+      "hehggadaopoacecdllhhajmbjkdcmajg",
+      "ldgfbffkinooeloadekpmfoklnobpien"
+    ],
+    "extensions_registered": [
+      "ahfgeienlihckogmohjhadlkjgocpleb",
+      "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+      "clngdbkpkpeebahjckkjfobafhncgmne",
+      "cnmkapobonpnoikggfbonmdkknnglejo",
+      "dbepggeogbaibhgnhhndojpepiihcmeb",
+      "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+      "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+      "hehggadaopoacecdllhhajmbjkdcmajg",
+      "iceenmpnolihodknabnnanmmdipodjfa",
+      "ldciclpbkaobfbicjebamaapbfplfjen",
+      "ldgfbffkinooeloadekpmfoklnobpien",
+      "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+      "nkeimhogjdpnpccoofpliimaahmaaome"
+    ],
+    "history_urls": 122855,
+    "history_visits": 1977548,
+    "passwords": 1141,
+    "sessions": 6,
+    "site_storage_bytes": 4429570870,
+    "webdata_autofill_profiles": 0,
+    "webdata_credit_cards": 4
+  },
+  "source_profile": "/Users/hailv/Library/Application Support/Dia/User Data/Default",
+  "status": "success",
+  "target_profiles": [
+    "/Users/hailv/Library/Application Support/Google/Chrome/Default",
+    "/Users/hailv/Library/Application Support/Google/Chrome/Profile 8"
+  ],
+  "targets": {
+    "Default": {
+      "encryption": {
+        "Cookies:cookies.encrypted_value": 2829,
+        "Extension Cookies:cookies.encrypted_value": 1,
+        "Login Data:logins.password_value": 1131,
+        "Web Data:credit_cards.card_number_encrypted": 4,
+        "Web Data:keywords.url_hash": 46,
+        "Web Data:local_stored_cvc.value_encrypted": 2
+      },
+      "final_encryption": {
+        "Cookies:cookies.encrypted_value": 2829,
+        "Extension Cookies:cookies.encrypted_value": 1,
+        "Login Data:logins.password_value": 1131,
+        "Web Data:credit_cards.card_number_encrypted": 4,
+        "Web Data:keywords.url_hash": 46,
+        "Web Data:local_stored_cvc.value_encrypted": 2
+      },
+      "final_integrity": {
+        "Cookies": "ok",
+        "Extension Cookies": "ok",
+        "Favicons": "ok",
+        "History": "ok",
+        "Login Data": "ok",
+        "Web Data": "ok"
+      },
+      "final_metrics": {
+        "bookmarks": 0,
+        "cookies": 2829,
+        "cookies_expired_persistent": 170,
+        "cookies_live_persistent": 2558,
+        "cookies_persistent": 2728,
+        "cookies_session": 101,
+        "downloads": 115,
+        "extensions": [
+          "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+          "clngdbkpkpeebahjckkjfobafhncgmne",
+          "dbepggeogbaibhgnhhndojpepiihcmeb",
+          "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+          "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+          "hehggadaopoacecdllhhajmbjkdcmajg",
+          "ldgfbffkinooeloadekpmfoklnobpien"
+        ],
+        "extensions_registered": [
+          "ahfgeienlihckogmohjhadlkjgocpleb",
+          "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+          "clngdbkpkpeebahjckkjfobafhncgmne",
+          "cnmkapobonpnoikggfbonmdkknnglejo",
+          "dbepggeogbaibhgnhhndojpepiihcmeb",
+          "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+          "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+          "hehggadaopoacecdllhhajmbjkdcmajg",
+          "iceenmpnolihodknabnnanmmdipodjfa",
+          "ldciclpbkaobfbicjebamaapbfplfjen",
+          "ldgfbffkinooeloadekpmfoklnobpien",
+          "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+          "nkeimhogjdpnpccoofpliimaahmaaome"
+        ],
+        "history_urls": 122855,
+        "history_visits": 1977548,
+        "passwords": 1141,
+        "sessions": 6,
+        "site_storage_bytes": 4429570870,
+        "webdata_autofill_profiles": 0,
+        "webdata_credit_cards": 4
+      },
+      "prepared_integrity": {
+        "Cookies": "ok",
+        "Extension Cookies": "ok",
+        "Favicons": "ok",
+        "History": "ok",
+        "Login Data": "ok",
+        "Web Data": "ok"
+      },
+      "prepared_metrics": {
+        "bookmarks": 0,
+        "cookies": 2829,
+        "cookies_expired_persistent": 170,
+        "cookies_live_persistent": 2558,
+        "cookies_persistent": 2728,
+        "cookies_session": 101,
+        "downloads": 115,
+        "extensions": [
+          "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+          "clngdbkpkpeebahjckkjfobafhncgmne",
+          "dbepggeogbaibhgnhhndojpepiihcmeb",
+          "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+          "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+          "hehggadaopoacecdllhhajmbjkdcmajg",
+          "ldgfbffkinooeloadekpmfoklnobpien"
+        ],
+        "extensions_registered": [
+          "ahfgeienlihckogmohjhadlkjgocpleb",
+          "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+          "clngdbkpkpeebahjckkjfobafhncgmne",
+          "cnmkapobonpnoikggfbonmdkknnglejo",
+          "dbepggeogbaibhgnhhndojpepiihcmeb",
+          "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+          "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+          "hehggadaopoacecdllhhajmbjkdcmajg",
+          "iceenmpnolihodknabnnanmmdipodjfa",
+          "ldciclpbkaobfbicjebamaapbfplfjen",
+          "ldgfbffkinooeloadekpmfoklnobpien",
+          "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+          "nkeimhogjdpnpccoofpliimaahmaaome"
+        ],
+        "history_urls": 122855,
+        "history_visits": 1977548,
+        "passwords": 1141,
+        "sessions": 6,
+        "site_storage_bytes": 4429570870,
+        "webdata_autofill_profiles": 0,
+        "webdata_credit_cards": 4
+      }
+    },
+    "Profile 8": {
+      "encryption": {
+        "Cookies:cookies.encrypted_value": 2829,
+        "Extension Cookies:cookies.encrypted_value": 1,
+        "Login Data:logins.password_value": 1131,
+        "Web Data:credit_cards.card_number_encrypted": 4,
+        "Web Data:keywords.url_hash": 46,
+        "Web Data:local_stored_cvc.value_encrypted": 2
+      },
+      "final_encryption": {
+        "Cookies:cookies.encrypted_value": 2829,
+        "Extension Cookies:cookies.encrypted_value": 1,
+        "Login Data:logins.password_value": 1131,
+        "Web Data:credit_cards.card_number_encrypted": 4,
+        "Web Data:keywords.url_hash": 46,
+        "Web Data:local_stored_cvc.value_encrypted": 2
+      },
+      "final_integrity": {
+        "Cookies": "ok",
+        "Extension Cookies": "ok",
+        "Favicons": "ok",
+        "History": "ok",
+        "Login Data": "ok",
+        "Web Data": "ok"
+      },
+      "final_metrics": {
+        "bookmarks": 0,
+        "cookies": 2829,
+        "cookies_expired_persistent": 170,
+        "cookies_live_persistent": 2558,
+        "cookies_persistent": 2728,
+        "cookies_session": 101,
+        "downloads": 115,
+        "extensions": [
+          "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+          "clngdbkpkpeebahjckkjfobafhncgmne",
+          "dbepggeogbaibhgnhhndojpepiihcmeb",
+          "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+          "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+          "hehggadaopoacecdllhhajmbjkdcmajg",
+          "ldgfbffkinooeloadekpmfoklnobpien"
+        ],
+        "extensions_registered": [
+          "ahfgeienlihckogmohjhadlkjgocpleb",
+          "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+          "clngdbkpkpeebahjckkjfobafhncgmne",
+          "cnmkapobonpnoikggfbonmdkknnglejo",
+          "dbepggeogbaibhgnhhndojpepiihcmeb",
+          "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+          "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+          "hehggadaopoacecdllhhajmbjkdcmajg",
+          "iceenmpnolihodknabnnanmmdipodjfa",
+          "ldciclpbkaobfbicjebamaapbfplfjen",
+          "ldgfbffkinooeloadekpmfoklnobpien",
+          "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+          "nkeimhogjdpnpccoofpliimaahmaaome"
+        ],
+        "history_urls": 122855,
+        "history_visits": 1977548,
+        "passwords": 1141,
+        "sessions": 6,
+        "site_storage_bytes": 4429570870,
+        "webdata_autofill_profiles": 0,
+        "webdata_credit_cards": 4
+      },
+      "prepared_integrity": {
+        "Cookies": "ok",
+        "Extension Cookies": "ok",
+        "Favicons": "ok",
+        "History": "ok",
+        "Login Data": "ok",
+        "Web Data": "ok"
+      },
+      "prepared_metrics": {
+        "bookmarks": 0,
+        "cookies": 2829,
+        "cookies_expired_persistent": 170,
+        "cookies_live_persistent": 2558,
+        "cookies_persistent": 2728,
+        "cookies_session": 101,
+        "downloads": 115,
+        "extensions": [
+          "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+          "clngdbkpkpeebahjckkjfobafhncgmne",
+          "dbepggeogbaibhgnhhndojpepiihcmeb",
+          "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+          "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+          "hehggadaopoacecdllhhajmbjkdcmajg",
+          "ldgfbffkinooeloadekpmfoklnobpien"
+        ],
+        "extensions_registered": [
+          "ahfgeienlihckogmohjhadlkjgocpleb",
+          "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+          "clngdbkpkpeebahjckkjfobafhncgmne",
+          "cnmkapobonpnoikggfbonmdkknnglejo",
+          "dbepggeogbaibhgnhhndojpepiihcmeb",
+          "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+          "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+          "hehggadaopoacecdllhhajmbjkdcmajg",
+          "iceenmpnolihodknabnnanmmdipodjfa",
+          "ldciclpbkaobfbicjebamaapbfplfjen",
+          "ldgfbffkinooeloadekpmfoklnobpien",
+          "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+          "nkeimhogjdpnpccoofpliimaahmaaome"
+        ],
+        "history_urls": 122855,
+        "history_visits": 1977548,
+        "passwords": 1141,
+        "sessions": 6,
+        "site_storage_bytes": 4429570870,
+        "webdata_autofill_profiles": 0,
+        "webdata_credit_cards": 4
+      }
+    }
+  }
+}

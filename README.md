@@ -43,6 +43,8 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 }
 ```
 
+跨 Chromium 产品迁移见 [Profile 迁移手册](docs/browser-profile-migration.md).
+
 ## 架构
 
 Bun runtime + TypeScript; `bun build --compile` 产出 macOS x64 / arm64 单文件二进制; GitHub Actions 在 `v*` tag push 时构建并发布 Release (附 `checksums.txt`); `install.sh` 从 Release 拉取对应架构资产 + SHA256 校验.
@@ -54,6 +56,8 @@ src/
   index.ts      # CLI 入口 / 子命令分发 / self-update / uninstall
   chrome.ts     # rsync profile + 退出运行中 Chrome + 以 CDP 端口启动 debug Chrome
   download.ts   # 带进度条的 GitHub Release 资产下载
+docs/
+  browser-profile-migration.md  # Chromium profile 跨产品迁移 / 加密 / 重签 / 验证
 build.ts        # bun build --compile, 注入 BUILD_NAME / BUILD_VERSION / BUILD_REPO
 install.sh      # curl | bash 安装脚本 (macOS only)
 .github/workflows/  # tag push → typecheck + build + checksums + release
