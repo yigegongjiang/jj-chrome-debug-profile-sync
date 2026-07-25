@@ -11,6 +11,13 @@
 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) + [SemVer](https://semver.org/).
 
+## [0.8.1] - 2026-07-25
+
+### Changed
+
+- debug 窗口配色改为「与日常 Chrome 明暗相反」(原固定亮色): 日常暗 → debug 亮, 日常亮 → debug 暗; 日常侧跟随系统时按 macOS 当前外观取反.
+- 不再给 debug 窗口套红色主题: 明暗反转已足够辨认, 主题色保持日常配置.
+
 ## [0.8.0] - 2026-07-25
 
 ### Added

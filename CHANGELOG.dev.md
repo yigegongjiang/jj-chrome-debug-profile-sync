@@ -7,6 +7,18 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.8.1] - 2026-07-25
+
+### Changed
+
+- debug 窗口配色改为「与日常 Chrome 明暗相反」(原固定亮色): 日常暗 → debug 亮, 日常亮 → debug 暗; 日常侧跟随系统时按 macOS 当前外观取反.
+  - 新增 `opposite_scheme()`: 读源 `<profile>/Preferences` 的 `browser.theme.color_scheme2` (缺失回落 `color_scheme`), `Light`/`Dark` 直接取反, `System`(0) 或缺键 → `system_is_dark()` 判定后取反.
+  - 新增 `system_is_dark()`: `defaults read -g AppleInterfaceStyle` == `Dark`; 亮色下该键不存在, 命令失败输出空串即判亮.
+  - 每轮同步重算, 无缓存 → 日常侧改主题 / 系统外观切换后下次运行即跟上.
+  - `wait_for_cdp()` 的 `marker` 行改为显示副本实际生效的配色 (`debug_scheme_name()` 读回本轮写入值).
+- 不再给 debug 窗口套红色主题: 明暗反转已足够辨认, 主题色保持日常配置.
+  - 移除 `MARK_COLOR` 及 `browser.theme.user_color` / `user_color2` / `follows_system_colors` 与 `Local State` 的 `profile_color_seed` 写入; 实机验证红种子在 dark 下派生成 `0xFF311915`, 与源 `0xFF1F2020` 肉眼分辨不出, 单靠它无效.
+
 ## [0.8.0] - 2026-07-25
 
 ### Added
