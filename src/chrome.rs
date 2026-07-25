@@ -17,7 +17,7 @@ pub static SRC: LazyLock<PathBuf> =
     LazyLock::new(|| home().join("Library/Application Support/Google/Chrome"));
 /// 独立调试副本
 pub static DST: LazyLock<PathBuf> =
-    LazyLock::new(|| home().join(".cache/chrome-debug-profile-sync"));
+    LazyLock::new(|| home().join(".config/jj-chrome-debug-profile-sync"));
 pub const PORT: &str = "9222";
 
 // 上轮同步的 profile 目录名。放 DST 内(删 DST 即重置),故 rsync 需排除自身,否则被 --delete 清掉。
