@@ -8,7 +8,7 @@
 
 # jj-chrome-debug-profile-sync
 
-rsync 本地 Chrome 最后使用的 profile 到独立副本 + 以 CDP 端口 `9222` 启动 debug Chrome 供外部工具 (chrome-devtools-mcp / DevTools / 自动化) 连接; Rust 单文件可执行, 仅 macOS.
+rsync 本地 Chrome 当前使用的 profile 到独立副本 + 以 CDP 端口 `9222` 启动 debug Chrome 供外部工具 (chrome-devtools-mcp / DevTools / 自动化) 连接; 日常 Chrome 全程不退出; Rust 单文件可执行, 仅 macOS.
 
 ## 使用
 
@@ -23,7 +23,7 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 <!-- prettier-ignore -->
 | 命令 | 别名 | 说明 |
 |---|---|---|
-| `(无)` | — | 同步最后使用的 profile → 启动 debug Chrome (CDP `:9222`, 不迁移原扩展, 可自行装用) |
+| `(无)` | — | 同步当前 profile → 启动 debug Chrome (CDP `:9222`, 不迁移原扩展, 可自行装用); 只终止上一轮 debug 实例, 日常 Chrome 不动 |
 | `original` | — | 启动原始 Chrome (沿用其自身 profile 状态, 与 debug 实例并存) |
 | `update` | `upgrade` | 自更新 (仅编译后二进制) |
 | `uninstall` | — | 卸载 (仅编译后二进制) |
@@ -45,9 +45,18 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 
 跨 Chromium 产品迁移见 [Profile 迁移手册](docs/browser-profile-migration.md).
 
+## 热同步一致性
+
+日常 Chrome 运行中做 rsync 有两处风险, 各自的处理:
+
+- SQLite 库跨事务撕裂 (rsync 流式读, 数 GB 拷贝窗口内源库仍在提交): rsync 后按 SQLite 文件头识别副本内的库, 逐个用 APFS clonefile (`cp -pc`) 覆盖 → 单文件原子快照, 内容/mtime 与源一致 (rsync 增量不受影响); 先 clone `-journal` / `-wal` 再 clone 主库 (最坏是回滚丢一个事务, 而非损坏), `-shm` 删除让 SQLite 重建
+- `Local State#profile.last_used` 延迟落盘 (刚切 profile 立刻运行会读到旧值): 优先取 `lsof` 中日常 Chrome 唯一活跃的 profile, 多个活跃窗口时回落 `last_used`
+
+Chrome 对 `History` / `Web Data` 等库开 exclusive locking, 外部进程连读锁都拿不到 (`VACUUM INTO` 直接 `SQLITE_BUSY`), 故只能走文件级快照. LevelDB 目录 (Local Storage / IndexedDB) 无对应机制, 极端情况由 Chrome 自行重建.
+
 ## 多 Profile
 
-- 同步对象 = 源 `Local State` 的 `profile.last_used` (日常 Chrome 最后使用的那个); 其余 profile + Guest Profile 不进副本
+- 同步对象 = 日常 Chrome 当前活跃 profile (回落 `Local State` 的 `profile.last_used`); 其余 profile + Guest Profile 不进副本
 - 副本内 `Local State` 裁剪为仅该 profile, 启动以 `--profile-directory` 锁定 → debug Chrome 只开这一个, 头像菜单不会列出未同步的 profile
 - 日常 Chrome 换了 profile 再运行 → 整个副本删除重建 (不增量); 同一 profile 连续运行 → rsync 增量
 
@@ -60,7 +69,7 @@ Rust (edition 2024) + `cargo build --release`, 双 target 产出 macOS x64 / arm
 ```
 src/
   main.rs       # CLI 入口 / 子命令分发 / self-update / uninstall
-  chrome.rs     # 选定 last_used profile + 退出运行中 Chrome + rsync 单 profile + 以 CDP 端口启动 debug Chrome
+  chrome.rs     # 选定活跃 profile + 终止上一轮 debug 实例 + rsync 单 profile (热同步 + SQLite clone 快照) + 以 CDP 端口启动 debug Chrome
   net.rs        # 带进度条的 Release 资产下载 + CDP JSON 探测
 docs/
   browser-profile-migration.md  # Chromium profile 跨产品迁移 / 加密 / 重签 / 验证

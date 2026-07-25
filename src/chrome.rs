@@ -1,7 +1,8 @@
-//! 选定 last_used profile + 退出运行中 Chrome + rsync 单 profile + 以 CDP 端口启动 debug Chrome。
+//! 选定活跃 profile + rsync 单 profile(热同步, 日常 Chrome 不退出) + 以 CDP 端口启动 debug Chrome。
 
+use std::ffi::OsString;
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::LazyLock;
@@ -53,6 +54,12 @@ const RUNTIME_FILES: &[&str] = &[
     "DevToolsActivePort", "RunningChromeVersion", "lockfile",
 ];
 
+/// SQLite 数据库文件头(前 16 字节),用于识别副本内的库,免维护随 Chrome 版本变化的文件名白名单。
+const SQLITE_MAGIC: &[u8; 16] = b"SQLite format 3\0";
+/// rsync 退出码 24 = 源侧文件在传输中消失。日常 Chrome 不退出 → 缓存/临时文件必然出现增删,不算失败。
+/// 其余非 0(含 23 partial transfer)仍视为错误:那是权限 / IO 问题,静默放过会产出不完整副本。
+const RSYNC_VANISHED: i32 = 24;
+
 fn home() -> PathBuf {
     // 与 libuv 的 homedir() 一致:优先 $HOME。缺失时留空,由 preflight 报"源目录不存在"。
     PathBuf::from(std::env::var("HOME").unwrap_or_default())
@@ -94,8 +101,24 @@ fn write_json(path: &Path, data: &Value) -> Result<(), String> {
     fs::write(path, bytes).map_err(|e| format!("failed to write {}: {e}", path.display()))
 }
 
-fn chrome_running() -> bool {
-    silent_status("pgrep", &["-x", "Google Chrome"])
+/// 只取 stdout(失败→空串), stderr 丢弃。
+fn silent_output(program: &str, args: &[&str]) -> String {
+    Command::new(program)
+        .args(args)
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .unwrap_or_default()
+}
+
+/// 匹配"绑定副本目录的 Chrome"的命令行片段。不带前导 `--`:pkill / pgrep 会把以 `-` 开头的 pattern 当选项。
+fn debug_chrome_pattern() -> String {
+    format!("user-data-dir={}", DST.display())
+}
+
+fn debug_chrome_running() -> bool {
+    silent_status("pgrep", &["-f", &debug_chrome_pattern()])
 }
 
 fn port_in_use() -> bool {
@@ -127,7 +150,32 @@ fn is_numbered_profile(name: &str) -> bool {
         .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
 }
 
-/// 选定要同步的 profile:源 Local State 的 profile.last_used = 日常 Chrome 最后使用的那个。
+/// 运行中日常 Chrome 实际打开着的 profile 目录名(取自 lsof 句柄路径)。
+/// Local State 的 last_used 是延迟落盘的:刚切过 profile 立刻运行会读到旧值 → 同步到错的 profile 并整体重建副本。
+/// 唯一活跃 profile 时它比 last_used 可信;多个(旧窗口未关)时无法判定"当前",交回 last_used。
+fn active_profiles() -> Vec<String> {
+    let prefix = format!("{}/", SRC.display());
+    let mut found: Vec<String> = Vec::new();
+    // -Fn = 每行一个字段, 路径行以 'n' 开头; -w 抑制警告行。
+    for line in silent_output("lsof", &["-w", "-c", "Google Chrome", "-Fn"]).lines() {
+        let Some(path) = line.strip_prefix('n') else {
+            continue;
+        };
+        // 副本目录的句柄(debug 实例)不以源目录为前缀,自然被排除。
+        let Some(rest) = path.strip_prefix(&prefix) else {
+            continue;
+        };
+        let name = rest.split('/').next().unwrap_or("");
+        if (name == DEFAULT_PROFILE || is_numbered_profile(name))
+            && !found.iter().any(|p| p == name)
+        {
+            found.push(name.to_string());
+        }
+    }
+    found
+}
+
+/// 选定要同步的 profile:优先运行中 Chrome 唯一活跃的那个,否则源 Local State 的 profile.last_used。
 fn select_profile() -> Result<ProfileSelection, String> {
     let state = read_json(&SRC.join("Local State"));
     let profile = state.as_ref().and_then(|v| v.get("profile"));
@@ -155,11 +203,13 @@ fn select_profile() -> Result<ProfileSelection, String> {
         }
     }
 
-    // last_used 缺失或指向已删除的 profile → 回退 Default(Chrome 必然存在的首个 profile)。
-    let target = if known.contains(&last_used) {
-        last_used
-    } else {
-        DEFAULT_PROFILE.to_string()
+    // 唯一活跃 profile 优先(覆盖可能陈旧的 last_used);
+    // 否则 last_used;last_used 缺失或指向已删除的 profile → 回退 Default(Chrome 必然存在的首个 profile)。
+    let active = active_profiles();
+    let target = match active.as_slice() {
+        [only] if known.contains(only) => only.clone(),
+        _ if known.contains(&last_used) => last_used,
+        _ => DEFAULT_PROFILE.to_string(),
     };
     let target_dir = SRC.join(&target);
     if !is_dir(&target_dir) {
@@ -207,20 +257,24 @@ fn reset_if_profile_changed(target: &str) -> Result<(), String> {
     fs::remove_dir_all(&*DST).map_err(|e| format!("failed to remove {}: {e}", DST.display()))
 }
 
-/// 关闭所有 Chrome:先优雅退出让其 flush SQLite(WAL)得到一致快照,再兜底强杀残留。
-fn quit_chrome() -> Result<(), String> {
-    if chrome_running() {
-        println!("⏳ Quitting Chrome…");
-        silent_status("osascript", &["-e", "quit app \"Google Chrome\""]);
+/// 只终止上一轮的 debug 实例(按 `--user-data-dir=DST` 精确匹配),日常 Chrome 全程不动。
+/// 必须终止:旧实例持有副本目录的单例锁(新实例只会唤起旧窗口,拿不到 CDP 端口),且会与 rsync --delete 抢写。
+/// 先 SIGTERM 走 Chrome 自身退出流程(flush 副本内数据),超时才 -9。
+fn quit_debug_chrome() -> Result<(), String> {
+    let pattern = debug_chrome_pattern();
+    if debug_chrome_running() {
+        println!("⏳ Quitting previous debug Chrome…");
+        silent_status("pkill", &["-f", &pattern]);
         let deadline = Instant::now() + Duration::from_secs(12);
-        while chrome_running() && Instant::now() < deadline {
+        while debug_chrome_running() && Instant::now() < deadline {
             std::thread::sleep(Duration::from_millis(500));
         }
-        silent_status("pkill", &["-9", "-x", "Google Chrome"]);
-        silent_status("pkill", &["-9", "-f", "Google Chrome Helper"]);
-        std::thread::sleep(Duration::from_secs(1));
+        if debug_chrome_running() {
+            silent_status("pkill", &["-9", "-f", &pattern]);
+            std::thread::sleep(Duration::from_secs(1));
+        }
     }
-    // 兜底:端口仍被占用说明有残留调试实例,拒绝继续。
+    // 兜底:端口仍被占用说明另有进程占着 CDP 端口(不是本工具的实例),拒绝继续。
     if port_in_use() {
         return Err(format!("Port {PORT} still in use; check and retry"));
     }
@@ -260,6 +314,33 @@ fn strip_migrated_extensions(target: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// 日常 Chrome 运行期间源 `Preferences` 里 `profile.exit_type` 恒为 "Crashed"(只在正常退出时写回 "Normal"),
+/// 副本照搬 → debug Chrome 每次启动都弹 "Restore pages? Chrome didn't shut down correctly"。
+/// 副本侧改回 "Normal" 即可(该键不在 Secure Preferences 的 protection.macs 中,不需重算 MAC);
+/// `profile.exited_cleanly` 是已废弃字段(Chrome 正常退出也留 false),不动。
+fn clear_crash_flags(target: &str) -> Result<(), String> {
+    let path = DST.join(target).join("Preferences");
+    if !path.exists() {
+        return Ok(());
+    }
+    let Some(mut data) = read_json(&path) else {
+        eprintln!(
+            "⚠️ Cannot parse {}; crash restore prompt may appear",
+            path.display()
+        );
+        return Ok(());
+    };
+    let Some(profile) = data
+        .as_object_mut()
+        .and_then(|root| root.get_mut("profile"))
+        .and_then(|p| p.as_object_mut())
+    else {
+        return Ok(());
+    };
+    profile.insert("exit_type".to_string(), Value::from("Normal"));
+    write_json(&path, &data)
+}
+
 /// 副本里只有 target 一个 profile,但 Local State 仍登记着全部 profile。
 /// 不裁剪的话 debug Chrome 的头像菜单会列出未同步的 profile,点击即新建空目录(污染副本且 --delete 清不掉)。
 fn prune_local_state(target: &str) -> Result<(), String> {
@@ -294,6 +375,84 @@ fn prune_local_state(target: &str) -> Result<(), String> {
     write_json(&path, &data)
 }
 
+fn is_sqlite(path: &Path) -> bool {
+    let mut buf = [0u8; 16];
+    fs::File::open(path)
+        .and_then(|mut f| f.read_exact(&mut buf))
+        .is_ok()
+        && &buf == SQLITE_MAGIC
+}
+
+/// 同目录同名 + 后缀(`Cookies` → `Cookies-journal`),不是扩展名替换。
+fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
+    let mut name = OsString::from(path.file_name().unwrap_or_default());
+    name.push(suffix);
+    path.with_file_name(name)
+}
+
+/// APFS clonefile:元数据级 COW,单文件原子且不额外占空间;`-p` 保留 mtime/size(不破坏下一轮 rsync 增量判定)。
+fn clone_file(src: &Path, dst: &Path) -> bool {
+    silent_status(
+        "cp",
+        &["-pc", &src.to_string_lossy(), &dst.to_string_lossy()],
+    )
+}
+
+/// 重取副本内 SQLite 库的一致快照。
+///
+/// rsync 是流式读:数 GB 副本的拷贝窗口内源库若提交写事务,单个库文件会读到跨事务的半新半旧页面(损坏)。
+/// Chrome 还对 History / Web Data 等库开 exclusive locking,外部进程连读锁都拿不到(`VACUUM INTO` 直接 SQLITE_BUSY),
+/// 只能走文件级拷贝 → 用 clonefile 逐库覆盖,把"文件内撕裂"收敛成"单文件某一时刻的完整内容"。
+///
+/// 顺序:先 clone `-journal` / `-wal` 再 clone 主库。反序遇到并发提交会得到"新库 + 已清空 journal"(无从恢复);
+/// 此序最坏是"旧 journal + 新库" → SQLite 回滚,丢一个事务但库自洽。`-shm` 是派生索引,删掉让 SQLite 重建
+/// (陈旧 -shm 配新 -wal 是已知的损坏来源)。
+///
+/// 遍历目标侧而非源侧:目标已由 rsync 的排除表过滤,不必在此复述排除规则,也不会把已排除内容重新拉回副本。
+fn resnapshot_sqlite_dbs() {
+    let mut dirs = vec![DST.clone()];
+    let mut failed = 0usize;
+    while let Some(dir) = dirs.pop() {
+        let Ok(entries) = fs::read_dir(&dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let Ok(file_type) = entry.file_type() else {
+                continue;
+            };
+            if file_type.is_dir() {
+                dirs.push(path);
+                continue;
+            }
+            if !file_type.is_file() || !is_sqlite(&path) {
+                continue;
+            }
+            let Ok(rel) = path.strip_prefix(&*DST) else {
+                continue;
+            };
+            let src = SRC.join(rel);
+            if !src.exists() {
+                continue;
+            }
+            let _ = fs::remove_file(with_suffix(&path, "-shm"));
+            for suffix in ["-journal", "-wal", ""] {
+                let src_file = with_suffix(&src, suffix);
+                if !suffix.is_empty() && !src_file.exists() {
+                    continue;
+                }
+                if !clone_file(&src_file, &with_suffix(&path, suffix)) {
+                    failed += 1;
+                }
+            }
+        }
+    }
+    // clone 失败(例如目标落到非 APFS 卷)不致命:rsync 的拷贝仍在,只是一致性回落到流式读的水平。
+    if failed > 0 {
+        eprintln!("⚠️ {failed} database file(s) could not be re-snapshotted; using rsync copy");
+    }
+}
+
 /// 镜像同步:--delete 让目标向源对齐(等价“清理旧副本 + 拷新”,但增量、快)。
 /// 只同步 target 一个 profile 的目录 + 根级共享数据(Local State 等),其余 profile 排除。
 fn sync_profile(selection: &ProfileSelection) -> Result<(), String> {
@@ -323,18 +482,20 @@ fn sync_profile(selection: &ProfileSelection) -> Result<(), String> {
     let status = cmd
         .status()
         .map_err(|e| format!("rsync failed to start: {e}"))?;
-    if !status.success() {
+    if !status.success() && status.code() != Some(RSYNC_VANISHED) {
         return Err(format!(
             "rsync failed (exit {})",
             status.code().unwrap_or(-1)
         ));
     }
 
+    resnapshot_sqlite_dbs();
     for f in RUNTIME_FILES {
         let _ = fs::remove_file(DST.join(f));
     }
     prune_local_state(&selection.target)?;
     strip_migrated_extensions(&selection.target)?;
+    clear_crash_flags(&selection.target)?;
     fs::write(DST.join(STATE_FILE), format!("{}\n", selection.target))
         .map_err(|e| format!("failed to write {}: {e}", DST.join(STATE_FILE).display()))
 }
@@ -405,8 +566,8 @@ fn wait_for_cdp(profile: &str) {
     println!("⚠️ Chrome launched but CDP not detected within 15s; open {url} to check");
 }
 
-/// 用原始 user-data-dir 启动日常 Chrome。debug Chrome 运行时,原始 Chrome 因单例锁通常无法直接打开,
-/// 此命令通过 `open -na` 显式拉起新实例,与 debug 副本并存。
+/// 用原始 user-data-dir 启动日常 Chrome。无参数同步已不再退出日常 Chrome,此命令仅用于日常实例确实不在时
+/// (或此前被手动退出)显式拉起,与 debug 副本并存。
 /// 不指定 --profile-directory:保持日常 Chrome 的原有行为(按 Local State 的 last_used / last_active_profiles 恢复窗口)。
 pub fn run_original() -> i32 {
     if !is_executable(Path::new(CHROME_BIN)) {
@@ -442,9 +603,9 @@ pub fn run() -> i32 {
 
 fn run_inner() -> Result<(), String> {
     preflight()?;
-    // 先退出 Chrome 再选 profile:Local State 是延迟落盘的,运行中读可能拿到切换 profile 前的旧值,
-    // 优雅退出会 flush 出最终的 last_used。
-    quit_chrome()?;
+    // 日常 Chrome 不退出(热同步): 一致性由 resnapshot_sqlite_dbs() 的 clonefile 快照兜住,
+    // last_used 的延迟落盘由 active_profiles() 兜住。只终止上一轮的 debug 实例。
+    quit_debug_chrome()?;
     let selection = select_profile()?;
     reset_if_profile_changed(&selection.target)?;
     sync_profile(&selection)?;
