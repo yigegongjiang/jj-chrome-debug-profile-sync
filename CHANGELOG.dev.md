@@ -7,6 +7,21 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.3.0] - 2026-07-25
+
+### Changed
+
+- 只同步日常 Chrome 最后使用的那个 profile, 不再整份拷贝全部 profile; 副本体积按单 profile 计算.
+  - 新增 `selectProfile()`: 读源 `Local State` 的 `profile.last_used` + `info_cache` 定 target, 其余 profile 与 `Guest Profile` 生成 `--exclude=/<name>/`; `Local State` 缺失/损坏时回退扫 `SRC` 目录(匹配 `Default` / `Profile N`), 避免 others 为空导致全量同步.
+  - `quitChrome()` 移到 `selectProfile()` 之前: `Local State` 是 debounced JsonPrefStore, 运行中读可能拿到切换 profile 前的旧值.
+  - `RSYNC_EXCLUDES` 拆为 `ROOT_EXCLUDES` (根级, 生成 `/<dir>/`) + `ANY_EXCLUDES` (任意层级) + `RUNTIME_FILES` (根级文件), 排除项按语义分组拼装.
+- debug Chrome 启动时锁定该 profile, 只开这一个窗口; 头像菜单不再列出未同步的 profile.
+  - `launchChrome()` 追加 `--profile-directory=<target>`; 不指定时 Chrome 依 `Local State` 推断, 且 unclean exit 会连带拉起 `last_active_profiles` 中已不存在的 profile(新建空目录).
+  - 新增 `pruneLocalState()`: sync 后把副本 `Local State` 的 `profile.info_cache` / `profiles_order` / `last_used` / `last_active_profiles` 裁剪为仅 target.
+  - `stripMigratedExtensions()` 由遍历全部 profile 目录改为只处理 target.
+- 日常 Chrome 换了 profile 后再运行, 旧副本整体删除重建, 避免残留上一个 profile 的数据.
+  - 新增 `resetIfProfileChanged()` + 状态文件 `DST/.synced-profile` (记录上轮 target, 加 `--exclude=/.synced-profile` 防被 `--delete` 清掉); 不一致或状态缺失 → `rm -rf DST`, 删除前复核 `DST !== SRC`.
+
 ## [0.2.1] - 2026-07-07
 
 ### Fixed
@@ -46,6 +61,7 @@
 - `help` 显示 chrome profile 路径 (日常源目录、调试副本目录、CDP 端点).
   - `src/chrome.ts` 导出 `SRC` / `DST` / `PORT`; `src/index.ts` help 分支追加 Profile paths 段.
 
+[0.3.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.1.0...v0.1.1
