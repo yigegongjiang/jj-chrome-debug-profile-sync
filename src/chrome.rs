@@ -54,6 +54,14 @@ const RUNTIME_FILES: &[&str] = &[
     "DevToolsActivePort", "RunningChromeVersion", "lockfile",
 ];
 
+/// debug 窗口的标记色: SkColor `0xFFFF0000`(红)。Chrome 的颜色 pref 存有符号 32 位整数。
+const MARK_COLOR: i64 = -65536;
+/// Chrome `BrowserColorScheme` 枚举的 Light(0=System / 1=Light / 2=Dark)。
+/// 固定 Light 而非跟随系统: dark 下 Material You 把派生色压得极暗(实测红种子 → `0xFF311915`), 肉眼几乎不显红;
+/// light 下标签栏才是明确的红。代价: 实测该键同时决定网页的 `prefers-color-scheme`(Chrome 150),
+/// debug 侧网页按 light 渲染 —— 需要暗色渲染时用 CDP `Emulation.setEmulatedMedia` 单次覆盖。
+const LIGHT_SCHEME: i64 = 1;
+
 /// SQLite 数据库文件头(前 16 字节),用于识别副本内的库,免维护随 Chrome 版本变化的文件名白名单。
 const SQLITE_MAGIC: &[u8; 16] = b"SQLite format 3\0";
 /// rsync 退出码 24 = 源侧文件在传输中消失。日常 Chrome 不退出 → 缓存/临时文件必然出现增删,不算失败。
@@ -375,6 +383,84 @@ fn prune_local_state(target: &str) -> Result<(), String> {
     write_json(&path, &data)
 }
 
+/// debug 副本的 profile 显示名。带端口 → 与日常 Chrome 的同名 profile 一眼区分。
+fn debug_label() -> String {
+    format!("DEBUG :{PORT}")
+}
+
+/// 副本 profile 的 `Preferences`: 改主题种子色 + profile 名。
+///
+/// debug 实例与日常 Chrome 共用同一份 profile 数据(头像 / 书签 / 主题全一致),窗口在 UI 上无从分辨。
+/// 写入种子色后 Chrome 按 Material You 派生整套 UI 配色 → 标签栏 / 边框带红调(源侧是中性灰)。
+/// 这些键不在 `Secure Preferences` 的 `protection.macs` 覆盖内(那里只有 `browser.show_home_button` 等少数键),
+/// 直接改不触发"设置被篡改"提示。每轮 rsync 都会用源文件覆盖,故必须在同步后重写。
+fn mark_debug_prefs(target: &str) -> Result<(), String> {
+    let path = DST.join(target).join("Preferences");
+    let Some(mut data) = read_json(&path) else {
+        eprintln!(
+            "⚠️ Cannot parse {}; debug window not marked",
+            path.display()
+        );
+        return Ok(());
+    };
+    let Some(root) = data.as_object_mut() else {
+        return Ok(());
+    };
+    if let Some(profile) = root.get_mut("profile").and_then(|p| p.as_object_mut()) {
+        profile.insert("name".to_string(), Value::from(debug_label()));
+    }
+    let browser = root
+        .entry("browser")
+        .or_insert_with(|| Value::Object(Map::new()));
+    if let Some(theme) = browser
+        .as_object_mut()
+        .map(|b| {
+            b.entry("theme")
+                .or_insert_with(|| Value::Object(Map::new()))
+        })
+        .and_then(|t| t.as_object_mut())
+    {
+        // user_color / user_color2 = 新旧两代配色键,都写,免得 Chrome 版本切换时取到源侧旧值。
+        theme.insert("user_color".to_string(), Value::from(MARK_COLOR));
+        theme.insert("user_color2".to_string(), Value::from(MARK_COLOR));
+        theme.insert("color_scheme".to_string(), Value::from(LIGHT_SCHEME));
+        theme.insert("color_scheme2".to_string(), Value::from(LIGHT_SCHEME));
+        // 跟随系统强调色时 user_color 被忽略。
+        theme.insert("follows_system_colors".to_string(), Value::from(false));
+        // 源侧存的本地主题(protobuf blob)会在启动时盖掉 user_color。
+        theme.remove("saved_local_theme");
+    }
+    write_json(&path, &data)
+}
+
+/// 副本 `Local State` 的 `info_cache`: 同步 profile 名与种子色,否则头像菜单 / profile 卡片仍显示原名原色。
+/// `profile_highlight_color` 不写:Chrome 会依种子色自行重算。
+fn mark_debug_local_state(target: &str) -> Result<(), String> {
+    let path = DST.join("Local State");
+    let Some(mut data) = read_json(&path) else {
+        eprintln!(
+            "⚠️ Cannot parse {}; profile name left untouched",
+            path.display()
+        );
+        return Ok(());
+    };
+    let Some(entry) = data
+        .as_object_mut()
+        .and_then(|root| root.get_mut("profile"))
+        .and_then(|p| p.as_object_mut())
+        .and_then(|p| p.get_mut("info_cache"))
+        .and_then(|c| c.as_object_mut())
+        .and_then(|c| c.get_mut(target))
+        .and_then(|e| e.as_object_mut())
+    else {
+        return Ok(());
+    };
+    entry.insert("name".to_string(), Value::from(debug_label()));
+    entry.insert("is_using_default_name".to_string(), Value::from(false));
+    entry.insert("profile_color_seed".to_string(), Value::from(MARK_COLOR));
+    write_json(&path, &data)
+}
+
 fn is_sqlite(path: &Path) -> bool {
     let mut buf = [0u8; 16];
     fs::File::open(path)
@@ -496,6 +582,8 @@ fn sync_profile(selection: &ProfileSelection) -> Result<(), String> {
     prune_local_state(&selection.target)?;
     strip_migrated_extensions(&selection.target)?;
     clear_crash_flags(&selection.target)?;
+    mark_debug_prefs(&selection.target)?;
+    mark_debug_local_state(&selection.target)?;
     fs::write(DST.join(STATE_FILE), format!("{}\n", selection.target))
         .map_err(|e| format!("failed to write {}: {e}", DST.join(STATE_FILE).display()))
 }
@@ -555,6 +643,11 @@ fn wait_for_cdp(profile: &str) {
             println!("   Endpoint  : {url}");
             println!("   user-data : {}", DST.display());
             println!("   profile   : {profile}");
+            // 两个窗口外观几乎一致, 提示怎么认出 debug 那个。
+            println!(
+                "   marker    : light UI + red theme, profile \"{}\"",
+                debug_label()
+            );
             return;
         }
         // CDP 尚未就绪,继续轮询

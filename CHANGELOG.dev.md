@@ -7,6 +7,18 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.8.0] - 2026-07-25
+
+### Added
+
+- debug Chrome 窗口带红色主题 + profile 名 `DEBUG :9222`, 与日常 Chrome 一眼可分 (此前两个窗口外观完全一致).
+  - 新增 `mark_debug_prefs()`: 副本 `<profile>/Preferences` 写 `browser.theme.user_color` / `user_color2` = `-65536` (SkColor `0xFFFF0000`) + `follows_system_colors=false`, 删 `saved_local_theme` (源侧 protobuf blob 会盖掉 user_color); `profile.name` 置标签.
+  - 新增 `mark_debug_local_state()`: 副本 `Local State#profile.info_cache.<target>` 写 `name` / `is_using_default_name=false` / `profile_color_seed`; `profile_highlight_color` 与 `default_avatar_*_color` 由 Chrome 依种子色重算 (实测 `0xFF1F2020` → `0xFF311915`).
+  - 两处键均不在 `Secure Preferences#protection.macs` 内 (该文件只覆盖 `browser.show_home_button` 等少数键), 无需重算 MAC; 每轮 rsync 后重写, 排在 `clear_crash_flags()` 之后.
+  - 未用 `--enable-automation` 的自动化提示条: 它连带置 `navigator.webdriver = true`, 会被反爬检测识别, 与"带真实登录态访问真实站点"的用途冲突.
+- 启动完成的输出多一行标记说明, 提示怎么认出 debug 窗口.
+  - `wait_for_cdp()` 增 `marker` 行; 标签由 `debug_label()` 依 `PORT` 生成, 单一信源.
+
 ## [0.7.0] - 2026-07-25
 
 ### Changed

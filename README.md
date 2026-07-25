@@ -45,6 +45,20 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 
 跨 Chromium 产品迁移见 [Profile 迁移手册](docs/browser-profile-migration.md).
 
+## 辨认 debug 窗口
+
+副本沿用日常 profile 的头像 / 书签 / 主题, 两个窗口外观本来一致; 同步时在副本侧写入标记 (只作用于副本, 日常实例不受影响):
+
+- 浏览器 UI 固定亮色 + 红色主题种子色 (`0xFFFF0000`) → 标签栏 / 工具栏是亮红, 与跟随系统 (暗色) 的日常窗口对比强烈
+- profile 名 = `DEBUG :9222` → 头像菜单 / profile 卡片显示
+- 附带差异: 工具栏无扩展图标 (原扩展不迁移), 头像菜单只列一个 profile
+
+> 亮色 UI 的代价: Chrome 150 实测该配色键同时决定网页的 `prefers-color-scheme`, debug 侧网页按 light 渲染. 需要暗色渲染时用 CDP `Emulation.setEmulatedMedia` 覆盖.
+
+Dock 图标 / `Cmd+Tab` 名称无法区分: 两个实例同属一个 app bundle, macOS 按 bundle 聚合; 要换图标须复制整个 `Google Chrome.app` 改 `Info.plist` 并重签名 (~1GB, Chrome 每次更新失效), 不做.
+
+权威判据: `chrome://version` → `Command Line` 含 `--remote-debugging-port=9222`, `Profile Path` 指向 `~/.config/jj-chrome-debug-profile-sync`; 终端侧 `lsof -nP -iTCP:9222 -sTCP:LISTEN`.
+
 ## 热同步一致性
 
 日常 Chrome 运行中做 rsync 有两处风险, 各自的处理:
