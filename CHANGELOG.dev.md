@@ -7,6 +7,15 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.6.0] - 2026-07-25
+
+### Changed
+
+- debug 副本目录改为 `~/.config/jj-chrome-debug-profile-sync` (原 `~/.cache/chrome-debug-profile-sync`).
+  - `src/chrome.rs#DST` 单常量改动; 全部读写经 `DST`, 无其它字面量.
+- 旧目录不自动迁移: 升级后首次运行会重新同步一份副本, 旧目录可手动删除回收空间.
+  - 不入代码迁移逻辑; 状态文件 `.synced-profile` 随目录走, 手动 `mv` 旧副本即可保留 rsync 增量.
+
 ## [0.5.0] - 2026-07-25
 
 ### Changed
@@ -92,6 +101,8 @@
 - `help` 显示 chrome profile 路径 (日常源目录、调试副本目录、CDP 端点).
   - `src/chrome.ts` 导出 `SRC` / `DST` / `PORT`; `src/index.ts` help 分支追加 Profile paths 段.
 
+[0.6.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.0...v0.2.1
