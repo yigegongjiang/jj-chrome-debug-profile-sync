@@ -7,6 +7,15 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.4.0] - 2026-07-25
+
+### Changed
+
+- `help` / `version` 不再是子命令, 改用 `-h` / `--help` 与 `-v` / `--version`; 旧写法报未知命令并退出.
+  - `src/index.ts` 删 `case "help"` / `case "version"`, USAGE 拆 `Commands` / `Flags` 两段; `update()` 自更新后回显改调 `--version` (仍调 `version` 会落 default 分支 exit 1, 静默丢 `after:` 行).
+- 安装命令 URL 变更为 `.../main/scripts/install.sh` (脚本统一移入 `scripts/`), 旧 URL 失效; 已装用户可直接 `update` 升级.
+  - `install.sh` → `scripts/install.sh` (git rename, mode 100755 保持); 新增 `scripts/install-local.sh`: `cd` 仓库根 + `bun run build` + tmp→`chmod`→`mv -f` 原子替换 (避免覆盖运行中二进制 ETXTBSY), `INSTALL_DIR` 可覆写, 收尾以 `--version` 验证 (无参会同步 profile 并拉起 Chrome).
+
 ## [0.3.0] - 2026-07-25
 
 ### Changed
