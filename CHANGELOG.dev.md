@@ -7,6 +7,25 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.7.0] - 2026-07-25
+
+### Changed
+
+- 同步不再退出日常 Chrome: 日常窗口原样保留, 只终止上一轮启动的 debug 实例.
+  - `quit_chrome()` (osascript quit + `pkill -x`) → `quit_debug_chrome()`: `pkill -f user-data-dir=<DST>` (SIGTERM → 12s → -9); pattern 去前导 `--` 避免被 pkill 当选项; 必须终止是因旧实例持副本单例锁 (新实例只唤起旧窗口) 且与 `rsync --delete` 抢写.
+  - `rsync` 容忍 exit 24 (vanished files, 热源必然出现); 23 及其余仍报错.
+- 同步对象改为日常 Chrome 当前活跃的 profile (原先依赖延迟落盘的记录, 刚切 profile 就运行会同步到上一个).
+  - 新增 `active_profiles()`: `lsof -w -c "Google Chrome" -Fn` 句柄路径取 `SRC/<profile>/` 前缀; 唯一活跃 → 覆盖 `last_used`, 多个 (旧窗口未关) → 回落 `last_used` → `Default`.
+
+### Fixed
+
+- 运行中拷贝 Cookies / 密码 / 历史等数据库改为原子快照, 消除边拷边写导致副本损坏、登录态丢失的风险.
+  - 新增 `resnapshot_sqlite_dbs()`: 遍历 DST (已被 rsync 排除表过滤, 免复述规则), 按 `SQLite format 3\0` 头识别库, 逐个 `cp -pc` (APFS clonefile) 从源覆盖; `-p` 保 mtime/size → rsync 增量判定不受影响.
+  - 顺序 `-journal` / `-wal` → 主库: 反序遇并发提交得"新库 + 已清空 journal"(不可恢复), 此序最坏"旧 journal + 新库"→ SQLite 回滚; `-shm` 删除让 SQLite 重建 (陈旧 -shm 配新 -wal = 已知损坏源).
+  - `VACUUM INTO` 实测在 `History` / `Web Data` 上 `database is locked (5)` (Chrome 开 exclusive locking, 外部读锁都拿不到), 故走文件级 clone; clone 失败仅告警, 保留 rsync 结果.
+- debug Chrome 启动不再弹 "Restore pages? / Chrome didn't shut down correctly" 恢复提示.
+  - 新增 `clear_crash_flags()`: 副本 `<profile>/Preferences` 的 `profile.exit_type` 置 `"Normal"` (日常 Chrome 运行期间源值恒为 `"Crashed"`, 只在正常退出时写回); 该键不在 `Secure Preferences#protection.macs` 内, 无需重算 MAC; 废弃字段 `profile.exited_cleanly` 不动.
+
 ## [0.6.0] - 2026-07-25
 
 ### Changed
@@ -101,6 +120,7 @@
 - `help` 显示 chrome profile 路径 (日常源目录、调试副本目录、CDP 端点).
   - `src/chrome.ts` 导出 `SRC` / `DST` / `PORT`; `src/index.ts` help 分支追加 Profile paths 段.
 
+[0.7.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.3.0...v0.4.0

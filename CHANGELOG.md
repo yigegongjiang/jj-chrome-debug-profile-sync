@@ -11,6 +11,18 @@
 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) + [SemVer](https://semver.org/).
 
+## [0.7.0] - 2026-07-25
+
+### Changed
+
+- 同步不再退出日常 Chrome: 日常窗口原样保留, 只终止上一轮启动的 debug 实例.
+- 同步对象改为日常 Chrome 当前活跃的 profile (原先依赖延迟落盘的记录, 刚切 profile 就运行会同步到上一个).
+
+### Fixed
+
+- 运行中拷贝 Cookies / 密码 / 历史等数据库改为原子快照, 消除边拷边写导致副本损坏、登录态丢失的风险.
+- debug Chrome 启动不再弹 "Restore pages? / Chrome didn't shut down correctly" 恢复提示.
+
 ## [0.6.0] - 2026-07-25
 
 ### Changed
@@ -74,6 +86,7 @@
 - 同步前自动退出在运行的 Chrome 取一致快照, 仅复制用户数据 (排除缓存 / 锁 / 端侧模型), 保留登录态、扩展、书签与站点数据.
 - `help` 显示 chrome profile 路径 (日常源目录、调试副本目录、CDP 端点).
 
+[0.7.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.3.0...v0.4.0
