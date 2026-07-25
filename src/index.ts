@@ -19,8 +19,8 @@ const REPO = typeof BUILD_REPO === "string" ? BUILD_REPO : (pkg.repository ?? ""
 const USAGE = `Usage: ${NAME} [command]
 
 Commands:
-  (none)                  Sync the Chrome profile and launch a debug Chrome (CDP)
-  original                Launch the original Chrome with the default profile
+  (none)                  Sync the last-used Chrome profile and launch a debug Chrome (CDP)
+  original                Launch the original Chrome on its own profiles
   help, --help, -h        Show this help message
   version, --version, -v  Show version information
   update, upgrade         Download the latest release and replace this binary
