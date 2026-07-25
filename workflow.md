@@ -16,9 +16,12 @@
 ```bash
 bun run start            # 直接运行 src/index.ts (无 compile)
 bun run build && ./dist/jj-chrome-debug-profile-sync-darwin-arm64   # 跑编译产物
+./scripts/install-local.sh   # 构建 + 装到 ~/.local/bin (验真实安装形态 / 全局命令); INSTALL_DIR 可覆写目标目录
 ```
 
 启动后访问 `http://127.0.0.1:9222/json/version` 验证 CDP 可用, 或通过 chrome-devtools-mcp 调用页面.
+
+> `install-local.sh` 覆盖 `install.sh` 装的同名二进制 (版本可能领先 Release); 恢复正式版重跑 `scripts/install.sh` 或 `<bin> update` (无版本比对, 无条件覆盖为 latest).
 
 # 发布
 

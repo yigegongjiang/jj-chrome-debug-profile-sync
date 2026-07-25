@@ -15,7 +15,7 @@ rsync 本地 Chrome 最后使用的 profile 到独立副本 + 以 CDP 端口 `92
 安装 (默认装到 `$HOME/.local/bin`, 可用 `VERSION` / `INSTALL_DIR` / `REPO` 覆写):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profile-sync/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profile-sync/main/scripts/install.sh | bash
 ```
 
 命令 `jj-chrome-debug-profile-sync`, 无参数运行即同步 profile 并启动 debug Chrome.
@@ -53,7 +53,7 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 
 ## 架构
 
-Bun runtime + TypeScript; `bun build --compile` 产出 macOS x64 / arm64 单文件二进制; GitHub Actions 在 `v*` tag push 时构建并发布 Release (附 `checksums.txt`); `install.sh` 从 Release 拉取对应架构资产 + SHA256 校验.
+Bun runtime + TypeScript; `bun build --compile` 产出 macOS x64 / arm64 单文件二进制; GitHub Actions 在 `v*` tag push 时构建并发布 Release (附 `checksums.txt`); `scripts/install.sh` 从 Release 拉取对应架构资产 + SHA256 校验.
 
 ## 项目结构
 
@@ -65,6 +65,8 @@ src/
 docs/
   browser-profile-migration.md  # Chromium profile 跨产品迁移 / 加密 / 重签 / 验证
 build.ts        # bun build --compile, 注入 BUILD_NAME / BUILD_VERSION / BUILD_REPO
-install.sh      # curl | bash 安装脚本 (macOS only)
+scripts/
+  install.sh        # curl | bash 安装, 从 Release 拉二进制 + SHA256 校验 (macOS only)
+  install-local.sh  # 源码构建 + 装到 ~/.local/bin (本地验证)
 .github/workflows/  # tag push → typecheck + build + checksums + release
 ```

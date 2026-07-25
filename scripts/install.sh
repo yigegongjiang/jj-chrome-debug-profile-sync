@@ -2,9 +2,9 @@
 # install.sh — download the latest jj-chrome-debug-profile-sync binary from GitHub Releases.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/install.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/install.sh | VERSION=v0.1.0 bash
-#   INSTALL_DIR=/usr/local/bin ./install.sh
+#   curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/scripts/install.sh | VERSION=v0.1.0 bash
+#   INSTALL_DIR=/usr/local/bin ./scripts/install.sh
 
 set -euo pipefail
 
