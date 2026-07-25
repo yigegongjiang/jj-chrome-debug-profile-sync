@@ -57,5 +57,5 @@ case ":$PATH:" in
 esac
 
 info "==> Verifying"
-# `version` only: running with no args would sync the profile and launch Chrome.
-"$dest" version
+# `--version` only: running with no args would sync the profile and launch Chrome.
+"$dest" --version

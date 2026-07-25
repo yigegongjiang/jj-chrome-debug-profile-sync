@@ -29,7 +29,7 @@ push `v*` tag → GitHub Actions (`.github/workflows/release.yml`) 自动 typech
 
 ## TL;DR
 
-1. 验证: `bun run typecheck && bun run build && ./dist/jj-chrome-debug-profile-sync-darwin-arm64 version`
+1. 验证: `bun run typecheck && bun run build && ./dist/jj-chrome-debug-profile-sync-darwin-arm64 --version`
 2. 写版本: `package.json#version` + `CHANGELOG.md` + `CHANGELOG.dev.md` 同步 (与 tag 一致)
 3. 发布: commit + annotated tag (`-a -m`) + push branch + tag
 4. 修上版 bug: amend + 删远程 tag + 重打 + force push
@@ -39,7 +39,7 @@ push `v*` tag → GitHub Actions (`.github/workflows/release.yml`) 自动 typech
 ```bash
 bun run typecheck
 bun run build
-./dist/jj-chrome-debug-profile-sync-darwin-arm64 version
+./dist/jj-chrome-debug-profile-sync-darwin-arm64 --version
 ```
 
 ## 2. 写版本

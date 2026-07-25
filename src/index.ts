@@ -19,12 +19,14 @@ const REPO = typeof BUILD_REPO === "string" ? BUILD_REPO : (pkg.repository ?? ""
 const USAGE = `Usage: ${NAME} [command]
 
 Commands:
-  (none)                  Sync the last-used Chrome profile and launch a debug Chrome (CDP)
-  original                Launch the original Chrome on its own profiles
-  help, --help, -h        Show this help message
-  version, --version, -v  Show version information
-  update, upgrade         Download the latest release and replace this binary
-  uninstall               Remove this binary from disk`;
+  (none)         Sync the last-used Chrome profile and launch a debug Chrome (CDP)
+  original       Launch the original Chrome on its own profiles
+  update         Download the latest release and replace this binary (alias: upgrade)
+  uninstall      Remove this binary from disk
+
+Flags:
+  -h, --help     Show this help message
+  -v, --version  Show version information`;
 
 function detectAsset(): string {
   if (process.platform !== "darwin") {
@@ -90,7 +92,7 @@ async function update(): Promise<number> {
 
   console.log(`==> Updated: ${dest}`);
   try {
-    const r = Bun.spawnSync([dest, "version"]);
+    const r = Bun.spawnSync([dest, "--version"]);
     if (r.success && r.stdout) {
       const after = new TextDecoder().decode(r.stdout).trim();
       if (after) console.log(`    after:  ${after}`);
@@ -126,7 +128,6 @@ async function main(args: readonly string[]): Promise<number> {
       return await run();
     case "original":
       return await runOriginal();
-    case "help":
     case "--help":
     case "-h":
       console.log(USAGE);
@@ -137,7 +138,6 @@ async function main(args: readonly string[]): Promise<number> {
           `  CDP:        http://127.0.0.1:${PORT}`,
       );
       return 0;
-    case "version":
     case "--version":
     case "-v":
       console.log(`${NAME} ${VERSION}`);

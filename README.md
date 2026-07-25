@@ -25,10 +25,10 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 |---|---|---|
 | `(无)` | — | 同步最后使用的 profile → 启动 debug Chrome (CDP `:9222`, 不迁移原扩展, 可自行装用) |
 | `original` | — | 启动原始 Chrome (沿用其自身 profile 状态, 与 debug 实例并存) |
-| `help` | `-h` / `--help` | 用法 |
-| `version` | `-v` / `--version` | 版本 |
 | `update` | `upgrade` | 自更新 (仅编译后二进制) |
 | `uninstall` | — | 卸载 (仅编译后二进制) |
+| `--help` | `-h` | 用法 |
+| `--version` | `-v` | 版本 |
 
 配合 [chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp), `.mcp.json`:
 
