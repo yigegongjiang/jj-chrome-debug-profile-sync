@@ -11,13 +11,21 @@
 
 ### Added
 
-- debug Chrome 窗口带红色主题 + profile 名 `DEBUG :9222`, 与日常 Chrome 一眼可分 (此前两个窗口外观完全一致).
-  - 新增 `mark_debug_prefs()`: 副本 `<profile>/Preferences` 写 `browser.theme.user_color` / `user_color2` = `-65536` (SkColor `0xFFFF0000`) + `follows_system_colors=false`, 删 `saved_local_theme` (源侧 protobuf blob 会盖掉 user_color); `profile.name` 置标签.
+- debug Chrome 窗口固定亮色 UI + 红色主题 + profile 名 `DEBUG :9222`, 与跟随系统配色的日常 Chrome 一眼可分 (此前两个窗口外观完全一致).
+  - 新增 `mark_debug_prefs()`: 副本 `<profile>/Preferences` 写 `browser.theme.user_color` / `user_color2` = `-65536` (SkColor `0xFFFF0000`) + `color_scheme` / `color_scheme2` = `1` (Light) + `follows_system_colors=false`, 删 `saved_local_theme` (源侧 protobuf blob 会盖掉 user_color); `profile.name` 置标签.
+  - 只写种子色不够: dark 配色下 Material You 把派生色压到 `0xFF311915` (源侧 `0xFF1F2020`), 实机对比肉眼分辨不出, 故并写 Light.
+  - `enterprise_label` 试过但不可用: Chrome 启动即从策略重算并清空, 工具栏那颗 "Work" pill 改不了.
   - 新增 `mark_debug_local_state()`: 副本 `Local State#profile.info_cache.<target>` 写 `name` / `is_using_default_name=false` / `profile_color_seed`; `profile_highlight_color` 与 `default_avatar_*_color` 由 Chrome 依种子色重算 (实测 `0xFF1F2020` → `0xFF311915`).
   - 两处键均不在 `Secure Preferences#protection.macs` 内 (该文件只覆盖 `browser.show_home_button` 等少数键), 无需重算 MAC; 每轮 rsync 后重写, 排在 `clear_crash_flags()` 之后.
   - 未用 `--enable-automation` 的自动化提示条: 它连带置 `navigator.webdriver = true`, 会被反爬检测识别, 与"带真实登录态访问真实站点"的用途冲突.
 - 启动完成的输出多一行标记说明, 提示怎么认出 debug 窗口.
   - `wait_for_cdp()` 增 `marker` 行; 标签由 `debug_label()` 依 `PORT` 生成, 单一信源.
+
+### Changed
+
+- debug 窗口内网页按亮色渲染 (`prefers-color-scheme: light`), 亮色 UI 的连带影响; 需要暗色时用 CDP 覆盖.
+  - CDP 实测 (Chrome 150, 系统 dark): `color_scheme2 = 1` → `matchMedia('(prefers-color-scheme: dark)').matches === false`; 置回 `0` → `true`. 即该键不止管浏览器 UI.
+- Dock 图标 / `Cmd+Tab` 名称无法区分: 同一 app bundle, macOS 按 bundle 聚合; 换图标须整包复制 `Google Chrome.app` + 改 `Info.plist` + 重签名 (~1GB, Chrome 每次更新失效), 判定为劣化隐患, 不做.
 
 ## [0.7.0] - 2026-07-25
 

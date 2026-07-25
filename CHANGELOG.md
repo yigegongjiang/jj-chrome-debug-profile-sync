@@ -15,8 +15,12 @@
 
 ### Added
 
-- debug Chrome 窗口带红色主题 + profile 名 `DEBUG :9222`, 与日常 Chrome 一眼可分 (此前两个窗口外观完全一致).
+- debug Chrome 窗口固定亮色 UI + 红色主题 + profile 名 `DEBUG :9222`, 与跟随系统配色的日常 Chrome 一眼可分 (此前两个窗口外观完全一致).
 - 启动完成的输出多一行标记说明, 提示怎么认出 debug 窗口.
+
+### Changed
+
+- debug 窗口内网页按亮色渲染 (`prefers-color-scheme: light`), 亮色 UI 的连带影响; 需要暗色时用 CDP 覆盖.
 
 ## [0.7.0] - 2026-07-25
 
