@@ -15,39 +15,38 @@ concurrency:
 jobs:
   release:
     name: Build and publish release
-    runs-on: ubuntu-latest
+    # macOS runner is required: rustc cannot cross-compile *-apple-darwin without the macOS SDK.
+    # The image ships rustup + cargo + clippy + rustfmt + jq; only the x86_64 target needs adding
+    # (done inside scripts/build.sh).
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Verify tag matches package.json version
+      - name: Verify tag matches Cargo.toml version
         run: |
-          pkg_version="$(jq -r .version package.json)"
+          pkg_version="$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')"
           tag="${{ github.ref_name }}"
           if [ "v${pkg_version}" != "${tag}" ]; then
-            echo "error: tag ${tag} does not match package.json version v${pkg_version}" >&2
+            echo "error: tag ${tag} does not match Cargo.toml version v${pkg_version}" >&2
             exit 1
           fi
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: Format check
+        run: cargo fmt --check
 
-      - name: Typecheck
-        run: bun run typecheck
+      - name: Lint
+        run: cargo clippy --release --all-targets --locked -- -D warnings
 
       - name: Build
-        run: bun run build
+        run: ./scripts/build.sh
 
       - name: Generate SHA256 checksums
         working-directory: dist
         run: |
           shopt -s nullglob
-          files=( "$(jq -r .name ../package.json)"-* )
+          files=( *-darwin-* )
           [ ${#files[@]} -gt 0 ] || { echo "no build artifacts found in dist/" >&2; exit 1; }
-          sha256sum "${files[@]}" > checksums.txt
+          shasum -a 256 "${files[@]}" > checksums.txt
           cat checksums.txt
 
       - name: Create GitHub Release

@@ -11,6 +11,17 @@
 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) + [SemVer](https://semver.org/).
 
+## [0.5.0] - 2026-07-25
+
+### Changed
+
+- 运行时由 Bun 换成 Rust; 命令、输出、退出码、同步与启动行为完全不变, 无需改用法.
+- 二进制体积由 ~63MB 降到 ~1.6MB, 启动更快; 已装用户直接 `update` 即可换到新版.
+
+### Fixed
+
+- Chrome 配置文件损坏时不再静默跳过 profile 裁剪 / 扩展清理, 会打印告警指出具体文件.
+
 ## [0.4.0] - 2026-07-25
 
 ### Changed
@@ -56,6 +67,7 @@
 - 同步前自动退出在运行的 Chrome 取一致快照, 仅复制用户数据 (排除缓存 / 锁 / 端侧模型), 保留登录态、扩展、书签与站点数据.
 - `help` 显示 chrome profile 路径 (日常源目录、调试副本目录、CDP 端点).
 
+[0.5.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.0...v0.2.1

@@ -12,7 +12,8 @@ cd "$(dirname "$0")/.."
 err()  { printf 'error: %s\n' "$*" >&2; exit 1; }
 info() { printf '%s\n' "$*"; }
 
-command -v bun >/dev/null 2>&1 || err "bun is required"
+command -v cargo >/dev/null 2>&1 || err "cargo is required"
+command -v jq >/dev/null 2>&1 || err "jq is required"
 
 case "$(uname -s)" in
   Darwin) ;;
@@ -24,14 +25,14 @@ case "$(uname -m)" in
   *) err "unsupported macOS architecture: $(uname -m)" ;;
 esac
 
-# Convention: package.json#name == binary name (same as the released asset).
-BIN_NAME="${BIN_NAME:-$(bun --print 'require("./package.json").name')}"
+# Convention: Cargo package name == binary name (same as the released asset).
+BIN_NAME="${BIN_NAME:-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].name')}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 artifact="dist/${BIN_NAME}-darwin-${host_arch}"
 
-info "==> Building ${BIN_NAME} (bun build --compile)"
+info "==> Building ${BIN_NAME} (cargo build --release)"
 info "    target: ${INSTALL_DIR}/${BIN_NAME}"
-bun run build
+./scripts/build.sh "$host_arch"
 
 [ -f "$artifact" ] || err "build artifact not found: $artifact"
 

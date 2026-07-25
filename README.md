@@ -8,7 +8,7 @@
 
 # jj-chrome-debug-profile-sync
 
-rsync 本地 Chrome 最后使用的 profile 到独立副本 + 以 CDP 端口 `9222` 启动 debug Chrome 供外部工具 (chrome-devtools-mcp / DevTools / 自动化) 连接; Bun 单文件可执行, 仅 macOS.
+rsync 本地 Chrome 最后使用的 profile 到独立副本 + 以 CDP 端口 `9222` 启动 debug Chrome 供外部工具 (chrome-devtools-mcp / DevTools / 自动化) 连接; Rust 单文件可执行, 仅 macOS.
 
 ## 使用
 
@@ -53,20 +53,21 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 
 ## 架构
 
-Bun runtime + TypeScript; `bun build --compile` 产出 macOS x64 / arm64 单文件二进制; GitHub Actions 在 `v*` tag push 时构建并发布 Release (附 `checksums.txt`); `scripts/install.sh` 从 Release 拉取对应架构资产 + SHA256 校验.
+Rust (edition 2024) + `cargo build --release`, 双 target 产出 macOS x64 / arm64 静态单文件 (~1.6MB); 依赖仅 `serde_json` / `ureq` (rustls) / `sha2`, 无系统运行时. GitHub Actions 在 `v*` tag push 时于 macOS runner 构建并发布 Release (附 `checksums.txt`); `scripts/install.sh` 从 Release 拉取对应架构资产 + SHA256 校验.
 
 ## 项目结构
 
 ```
 src/
-  index.ts      # CLI 入口 / 子命令分发 / self-update / uninstall
-  chrome.ts     # 选定 last_used profile + 退出运行中 Chrome + rsync 单 profile + 以 CDP 端口启动 debug Chrome
-  download.ts   # 带进度条的 GitHub Release 资产下载
+  main.rs       # CLI 入口 / 子命令分发 / self-update / uninstall
+  chrome.rs     # 选定 last_used profile + 退出运行中 Chrome + rsync 单 profile + 以 CDP 端口启动 debug Chrome
+  net.rs        # 带进度条的 Release 资产下载 + CDP JSON 探测
 docs/
   browser-profile-migration.md  # Chromium profile 跨产品迁移 / 加密 / 重签 / 验证
-build.ts        # bun build --compile, 注入 BUILD_NAME / BUILD_VERSION / BUILD_REPO
+Cargo.toml      # 包名 = 二进制名 = 资产名前缀; NAME / VERSION / REPO 由 CARGO_PKG_* 注入
 scripts/
+  build.sh          # cargo build 双 target → dist/<name>-darwin-{arm64,x64}
   install.sh        # curl | bash 安装, 从 Release 拉二进制 + SHA256 校验 (macOS only)
   install-local.sh  # 源码构建 + 装到 ~/.local/bin (本地验证)
-.github/workflows/  # tag push → typecheck + build + checksums + release
+.github/workflows/  # tag push → fmt + clippy + build + checksums + release
 ```

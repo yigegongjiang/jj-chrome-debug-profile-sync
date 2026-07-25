@@ -7,6 +7,28 @@
 
 # Changelog (developer, follow [CHANGELOG.md](./CHANGELOG.md))
 
+## [0.5.0] - 2026-07-25
+
+### Changed
+
+- 运行时由 Bun 换成 Rust; 命令、输出、退出码、同步与启动行为完全不变, 无需改用法.
+  - `src/{index,chrome,download}.ts` → `src/{main,chrome,net}.rs`; 删 `build.ts` / `package.json` / `bun.lock` / `tsconfig.json`, 新增 `Cargo.toml` + `Cargo.lock` (edition 2024, `rust-version = 1.85`).
+  - `BUILD_NAME/VERSION/REPO` 的 `--define` 注入改为 `env!("CARGO_PKG_{NAME,VERSION,REPOSITORY}")`; `repository` 为完整 URL, self-update 前 trim `https://github.com/` 取 `<owner>/<repo>`.
+  - spawn stdio 逐点对齐 Bun 语义: `pgrep`/`lsof`/`osascript`/`pkill` 走 `silent_status()` 全 `Stdio::null()` (Rust 默认 inherit, 会把 PID 列表与 lsof 表打到终端); `rsync`/`open` 保持 inherit.
+  - `access(X_OK)` → `metadata().permissions().mode() & 0o111`; `homedir()` → `$HOME` (与 libuv 取值顺序一致); `process.execPath` → `current_exe()` (解析 symlink).
+  - `serde_json` 启 `preserve_order` 保持 Chrome pref 键序; 读取走 `from_utf8_lossy` 兜非法 UTF-8 (JS `JSON.parse` 宽容, serde 严格).
+  - HTTP 由全局 `fetch` 换 `ureq` 3 (rustls + webpki-roots, 关 `gzip` 以免 `content-length` 与进度条错位); CDP 探测用 `timeout_global(1s)` 的独立 Agent; SHA256 由 `node:crypto` 换 `sha2`.
+  - `launch_chrome()` 以 `spawn()` + `drop(child)` 替代 `proc.unref()`; `panic = "abort"` + 全 `Result` 路径, 保证异常退出码仍为 1.
+- 二进制体积由 ~63MB 降到 ~1.6MB, 启动更快; 已装用户直接 `update` 即可换到新版.
+  - `[profile.release]` `lto = true` + `codegen-units = 1` + `strip = true` + `panic = "abort"`.
+  - 新增 `scripts/build.sh` (双 target → `dist/<name>-darwin-{arm64,x64}`, 资产名不变以兼容 `install.sh` 与 v0.4.0 自更新); `install-local.sh` 改调 `build.sh <host_arch>`.
+  - `release.yml`: `ubuntu-latest` + `setup-bun` → `macos-latest` (rustc 无 macOS SDK 无法从 Linux 交叉编译 apple-darwin), `typecheck` → `cargo fmt --check` + `cargo clippy --locked -D warnings`, 版本校验与 checksum glob 由 `package.json` 改 `cargo metadata` / `*-darwin-*`, `sha256sum` → `shasum -a 256` (输出同为双空格分隔).
+
+### Fixed
+
+- Chrome 配置文件损坏时不再静默跳过 profile 裁剪 / 扩展清理, 会打印告警指出具体文件.
+  - `prune_local_state()` / `strip_migrated_extensions()` 解析失败时 `eprintln!("⚠️ Cannot parse …")`; TS 版 `.catch(() => null)` 后直接 return, 头像菜单裁剪失效却无任何输出.
+
 ## [0.4.0] - 2026-07-25
 
 ### Changed

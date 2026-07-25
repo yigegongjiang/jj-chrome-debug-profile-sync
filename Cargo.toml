@@ -1,0 +1,24 @@
+[package]
+name = "jj-chrome-debug-profile-sync"
+version = "0.5.0"
+edition = "2024"
+rust-version = "1.85"
+description = "rsync Chrome profile and launch a debug Chrome for CDP / external tooling (macOS only)"
+repository = "https://github.com/yigegongjiang/jj-chrome-debug-profile-sync"
+publish = false
+
+[dependencies]
+# preserve_order: 改写 Chrome 的 Local State / Preferences 时保持键序, 只动目标键.
+serde_json = { version = "1", features = ["preserve_order"] }
+sha2 = "0.10"
+# 关掉 gzip: 资产下载按 content-length 画进度条, 不要 Content-Encoding 造成的长度错位.
+ureq = { version = "3.3", default-features = false, features = [
+  "rustls",
+  "rustls-webpki-roots",
+] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

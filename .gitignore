@@ -1,12 +1,8 @@
-# Dependencies
-node_modules/
+# Cargo build cache
+/target/
 
 # Build output
 dist/
-
-# Intermediate runtime copy left by `bun build --compile`
-*.bun-build
-.*.bun-build
 
 # Logs
 *.log

@@ -11,7 +11,7 @@ set -euo pipefail
 REPO="${REPO:-yigegongjiang/jj-chrome-debug-profile-sync}"
 VERSION="${VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
-# Convention: package.json#name == repo name, so binary name == repo basename.
+# Convention: Cargo package name == repo name, so binary name == repo basename.
 BIN_NAME="${BIN_NAME:-${REPO##*/}}"
 
 err()  { printf 'error: %s\n' "$*" >&2; exit 1; }
