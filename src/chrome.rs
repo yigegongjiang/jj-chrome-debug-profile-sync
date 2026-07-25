@@ -54,13 +54,10 @@ const RUNTIME_FILES: &[&str] = &[
     "DevToolsActivePort", "RunningChromeVersion", "lockfile",
 ];
 
-/// debug 窗口的标记色: SkColor `0xFFFF0000`(红)。Chrome 的颜色 pref 存有符号 32 位整数。
-const MARK_COLOR: i64 = -65536;
-/// Chrome `BrowserColorScheme` 枚举的 Light(0=System / 1=Light / 2=Dark)。
-/// 固定 Light 而非跟随系统: dark 下 Material You 把派生色压得极暗(实测红种子 → `0xFF311915`), 肉眼几乎不显红;
-/// light 下标签栏才是明确的红。代价: 实测该键同时决定网页的 `prefers-color-scheme`(Chrome 150),
-/// debug 侧网页按 light 渲染 —— 需要暗色渲染时用 CDP `Emulation.setEmulatedMedia` 单次覆盖。
-const LIGHT_SCHEME: i64 = 1;
+// Chrome 的 `BrowserColorScheme` 枚举(`browser.theme.color_scheme` / `color_scheme2` 的取值)。
+const SCHEME_SYSTEM: i64 = 0;
+const SCHEME_LIGHT: i64 = 1;
+const SCHEME_DARK: i64 = 2;
 
 /// SQLite 数据库文件头(前 16 字节),用于识别副本内的库,免维护随 Chrome 版本变化的文件名白名单。
 const SQLITE_MAGIC: &[u8; 16] = b"SQLite format 3\0";
@@ -388,10 +385,53 @@ fn debug_label() -> String {
     format!("DEBUG :{PORT}")
 }
 
-/// 副本 profile 的 `Preferences`: 改主题种子色 + profile 名。
+/// macOS 当前是否暗色外观。`AppleInterfaceStyle` 只在暗色时存在(值 `Dark`), 亮色下键缺失 → 命令失败输出空。
+fn system_is_dark() -> bool {
+    silent_output("defaults", &["read", "-g", "AppleInterfaceStyle"]).trim() == "Dark"
+}
+
+/// 副本里实际生效的浏览器配色名, 供启动提示显示(读的是本轮刚写进去的值)。
+fn debug_scheme_name(target: &str) -> &'static str {
+    let scheme = read_json(&DST.join(target).join("Preferences")).and_then(|prefs| {
+        prefs
+            .get("browser")?
+            .get("theme")?
+            .get("color_scheme2")?
+            .as_i64()
+    });
+    match scheme {
+        Some(SCHEME_DARK) => "dark",
+        Some(SCHEME_LIGHT) => "light",
+        _ => "unknown",
+    }
+}
+
+/// 与日常 profile 相反的浏览器配色: 日常亮 → debug 暗, 日常暗 → debug 亮。
+/// 日常侧为 System(或键缺失)时按 macOS 当前外观判定实际明暗再取反。
+/// 每轮同步重算 → 日常侧改了主题、或系统外观切换, 下次运行即跟上。
+fn opposite_scheme(target: &str) -> i64 {
+    let scheme = read_json(&SRC.join(target).join("Preferences"))
+        .and_then(|prefs| {
+            let theme = prefs.get("browser")?.get("theme")?;
+            // color_scheme2 = 当前键, color_scheme = 旧键; 前者缺失才回落。
+            theme
+                .get("color_scheme2")
+                .or_else(|| theme.get("color_scheme"))?
+                .as_i64()
+        })
+        .unwrap_or(SCHEME_SYSTEM);
+    let dark = match scheme {
+        SCHEME_LIGHT => false,
+        SCHEME_DARK => true,
+        _ => system_is_dark(),
+    };
+    if dark { SCHEME_LIGHT } else { SCHEME_DARK }
+}
+
+/// 副本 profile 的 `Preferences`: 浏览器配色取反 + profile 名换成 debug 标签。
 ///
 /// debug 实例与日常 Chrome 共用同一份 profile 数据(头像 / 书签 / 主题全一致),窗口在 UI 上无从分辨。
-/// 写入种子色后 Chrome 按 Material You 派生整套 UI 配色 → 标签栏 / 边框带红调(源侧是中性灰)。
+/// 明暗反转是最直白的区分:日常暗色 → debug 亮色,日常亮色 → debug 暗色。
 /// 这些键不在 `Secure Preferences` 的 `protection.macs` 覆盖内(那里只有 `browser.show_home_button` 等少数键),
 /// 直接改不触发"设置被篡改"提示。每轮 rsync 都会用源文件覆盖,故必须在同步后重写。
 fn mark_debug_prefs(target: &str) -> Result<(), String> {
@@ -420,21 +460,17 @@ fn mark_debug_prefs(target: &str) -> Result<(), String> {
         })
         .and_then(|t| t.as_object_mut())
     {
-        // user_color / user_color2 = 新旧两代配色键,都写,免得 Chrome 版本切换时取到源侧旧值。
-        theme.insert("user_color".to_string(), Value::from(MARK_COLOR));
-        theme.insert("user_color2".to_string(), Value::from(MARK_COLOR));
-        theme.insert("color_scheme".to_string(), Value::from(LIGHT_SCHEME));
-        theme.insert("color_scheme2".to_string(), Value::from(LIGHT_SCHEME));
-        // 跟随系统强调色时 user_color 被忽略。
-        theme.insert("follows_system_colors".to_string(), Value::from(false));
-        // 源侧存的本地主题(protobuf blob)会在启动时盖掉 user_color。
+        // color_scheme2 = 当前键, color_scheme = 旧键; 都写, 免得 Chrome 版本切换时取到源侧旧值。
+        let scheme = opposite_scheme(target);
+        theme.insert("color_scheme".to_string(), Value::from(scheme));
+        theme.insert("color_scheme2".to_string(), Value::from(scheme));
+        // sync 残留的主题 blob(ThemeSpecifics protobuf)在启动时会盖掉上面两个键。
         theme.remove("saved_local_theme");
     }
     write_json(&path, &data)
 }
 
-/// 副本 `Local State` 的 `info_cache`: 同步 profile 名与种子色,否则头像菜单 / profile 卡片仍显示原名原色。
-/// `profile_highlight_color` 不写:Chrome 会依种子色自行重算。
+/// 副本 `Local State` 的 `info_cache`: 同步 profile 名,否则头像菜单 / profile 卡片仍显示日常那个名字。
 fn mark_debug_local_state(target: &str) -> Result<(), String> {
     let path = DST.join("Local State");
     let Some(mut data) = read_json(&path) else {
@@ -457,7 +493,6 @@ fn mark_debug_local_state(target: &str) -> Result<(), String> {
     };
     entry.insert("name".to_string(), Value::from(debug_label()));
     entry.insert("is_using_default_name".to_string(), Value::from(false));
-    entry.insert("profile_color_seed".to_string(), Value::from(MARK_COLOR));
     write_json(&path, &data)
 }
 
@@ -645,7 +680,8 @@ fn wait_for_cdp(profile: &str) {
             println!("   profile   : {profile}");
             // 两个窗口外观几乎一致, 提示怎么认出 debug 那个。
             println!(
-                "   marker    : light UI + red theme, profile \"{}\"",
+                "   marker    : UI scheme = {} (inverted vs daily), profile \"{}\"",
+                debug_scheme_name(profile),
                 debug_label()
             );
             return;

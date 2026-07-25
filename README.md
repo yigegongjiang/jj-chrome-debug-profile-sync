@@ -49,11 +49,13 @@ curl -fsSL https://raw.githubusercontent.com/yigegongjiang/jj-chrome-debug-profi
 
 副本沿用日常 profile 的头像 / 书签 / 主题, 两个窗口外观本来一致; 同步时在副本侧写入标记 (只作用于副本, 日常实例不受影响):
 
-- 浏览器 UI 固定亮色 + 红色主题种子色 (`0xFFFF0000`) → 标签栏 / 工具栏是亮红, 与跟随系统 (暗色) 的日常窗口对比强烈
+- 浏览器 UI 明暗与日常 Chrome 相反: 日常暗 → debug 亮, 日常亮 → debug 暗; 日常侧设为「跟随系统」时按 macOS 当前外观 (`AppleInterfaceStyle`) 判定实际明暗再取反
 - profile 名 = `DEBUG :9222` → 头像菜单 / profile 卡片显示
 - 附带差异: 工具栏无扩展图标 (原扩展不迁移), 头像菜单只列一个 profile
 
-> 亮色 UI 的代价: Chrome 150 实测该配色键同时决定网页的 `prefers-color-scheme`, debug 侧网页按 light 渲染. 需要暗色渲染时用 CDP `Emulation.setEmulatedMedia` 覆盖.
+每轮同步重算 → 日常侧换了主题 / 系统外观切换, 下次运行即跟上. 主题色 (强调色) 不动, 保持日常配置.
+
+> 代价: Chrome 150 实测该配色键同时决定网页的 `prefers-color-scheme`, debug 侧网页按相反明暗渲染. 需要与日常一致时用 CDP `Emulation.setEmulatedMedia` 覆盖.
 
 Dock 图标 / `Cmd+Tab` 名称无法区分: 两个实例同属一个 app bundle, macOS 按 bundle 聚合; 要换图标须复制整个 `Google Chrome.app` 改 `Info.plist` 并重签名 (~1GB, Chrome 每次更新失效), 不做.
 
