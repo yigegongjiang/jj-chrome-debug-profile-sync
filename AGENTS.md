@@ -6,7 +6,7 @@
 ## 指令路由（MUST）
 
 - 【MUST】代码 / 架构 / 命令 / 结构 → [README.md](./README.md)
-- 【MUST】调试 / 版本 / changelog / git commit+push / 预部署+发布 → [workflow.md](./workflow.md)
+- 【MUST】版本 / changelog / git commit+push / 预部署+发布 → [workflow.md](./workflow.md)
 
 ## 工作模式 (MUST、AI-only)
 
@@ -19,7 +19,7 @@
 ## 工作流程
 
 1. **分流**：判断人类输入是否涉及行为或交付物变更（feature / fix / config / 行为逻辑变更 = 需求变更）；纯咨询 / 纯文案·注释·md 内容调整（不改变运行行为或交付物）→ 直接响应或编辑，跳过后续步骤
-2. AI 抉择并执行后续工作；开发过程中按需走 [workflow.md#调试](./workflow.md) 验证变更
+2. AI 抉择并执行后续工作；开发过程中按需验证变更（见 [workflow.md](./workflow.md) 验证步骤）
 3. 执行 [workflow.md#发布](./workflow.md) 完整流程；未发布上线 = 需求未完成，MUST NOT 在发布完成前停止
 
 ## 文档编写规范

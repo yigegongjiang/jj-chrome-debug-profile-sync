@@ -70,6 +70,7 @@
 - `help` 显示 chrome profile 路径 (日常源目录、调试副本目录、CDP 端点).
   - `src/chrome.ts` 导出 `SRC` / `DST` / `PORT`; `src/index.ts` help 分支追加 Profile paths 段.
 
+[0.4.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/yigegongjiang/jj-chrome-debug-profile-sync/compare/v0.1.1...v0.2.0

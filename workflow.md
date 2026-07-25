@@ -11,28 +11,16 @@
 - `gh` 已登录
 - `chrome-devtools-mcp` (CDP `http://127.0.0.1:9222`)
 
-# 调试
-
-```bash
-bun run start            # 直接运行 src/index.ts (无 compile)
-bun run build && ./dist/jj-chrome-debug-profile-sync-darwin-arm64   # 跑编译产物
-./scripts/install-local.sh   # 构建 + 装到 ~/.local/bin (验真实安装形态 / 全局命令); INSTALL_DIR 可覆写目标目录
-```
-
-启动后访问 `http://127.0.0.1:9222/json/version` 验证 CDP 可用, 或通过 chrome-devtools-mcp 调用页面.
-
-> `install-local.sh` 覆盖 `install.sh` 装的同名二进制 (版本可能领先 Release); 恢复正式版重跑 `scripts/install.sh` 或 `<bin> update` (无版本比对, 无条件覆盖为 latest).
-
 # 发布
 
-push `v*` tag → GitHub Actions (`.github/workflows/release.yml`) 自动 typecheck + build + checksums + 发布 Release.
+代码变更完成后立即执行（= 需求交付的最后环节）。交付 = 预部署 + push; push `v*` tag → GitHub Actions (`.github/workflows/release.yml`) 自动 typecheck + build + checksums + 发布 Release.
 
 ## TL;DR
 
 1. 验证: `bun run typecheck && bun run build && ./dist/jj-chrome-debug-profile-sync-darwin-arm64 --version`
 2. 写版本: `package.json#version` + `CHANGELOG.md` + `CHANGELOG.dev.md` 同步 (与 tag 一致)
-3. 发布: commit + annotated tag (`-a -m`) + push branch + tag
-4. 修上版 bug: amend + 删远程 tag + 重打 + force push
+3. 预部署: `./scripts/install-local.sh`
+4. 发布: commit + annotated tag (`-a -m`) + push branch + tag
 
 ## 1. 验证
 
@@ -44,13 +32,21 @@ bun run build
 
 ## 2. 写版本
 
-- 版本号: 默认递增 PATCH; 新功能 → MINOR; 不兼容改动 → MAJOR.
+- 版本号: 默认递增 PATCH (第三位); 超大功能更新/调整 → MINOR; 禁止 → MAJOR（除非人类主动要求）.
 - `package.json#version` + `CHANGELOG.md` + `CHANGELOG.dev.md` 同步编辑 (与 tag 一致); tag 带 `v` 前缀, version 字段不带.
 - CHANGELOG.md = 用户向; CHANGELOG.dev.md = 镜像 + 技术子项.
 
 > Actions 第一步校验 `v${package.json#version} == tag`, 不一致直接 fail.
 
-## 3. 发布
+## 3. 预部署
+
+本机装载 = 交付必经节点; 与改动大小无关, 每次发布都执行.
+
+```bash
+./scripts/install-local.sh   # 构建 + 原子替换 ~/.local/bin 同名二进制
+```
+
+## 4. 发布
 
 ```bash
 git add -- package.json CHANGELOG.md CHANGELOG.dev.md   # 仅版本相关文件
@@ -61,18 +57,3 @@ git push origin vX.Y.Z
 ```
 
 > annotated tag (`-a -m`) 而非 lightweight: 兼容 `tag.gpgsign=true` (启用时 lightweight 会被强升为 signed 但缺 message → fail).
-
-## 4. 修上版 bug
-
-刚发布版本存在明显 bug (反馈直指刚推 tag / 改动微小且仅修缺陷 / 语气为上一版延续) → amend 修复后重发, 不出新版本号.
-
-> commit + tag 必须一起更新: amend 后 commit hash 变, 远程 tag 仍指旧 hash → Release 产物与 main HEAD 偏离; 仅 force push commit 不够, 必须删远程 tag 重建, 否则 Actions 不会重跑 build.
-
-```bash
-git commit -a --amend --no-edit
-git tag -d vX.Y.Z
-git push origin :refs/tags/vX.Y.Z
-git tag -a vX.Y.Z -m "vX.Y.Z"
-git push --force-with-lease origin main
-git push origin vX.Y.Z
-```
